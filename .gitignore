@@ -1,0 +1,15 @@
+.bash_history
+.lesshst
+.mysql_history
+.python_history
+x
+.cache/   
+.config/  
+.ipython/ 
+.local/   
+.termux/  
+storage/
+token
+.gitconfig
+.ssh/
+.termux_authinfo
