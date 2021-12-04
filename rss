@@ -1,0 +1,10 @@
+#!/bin/sh
+
+echo "please wait.. downloading rss.."
+curl -s https://subsplease.org/rss/?r=720 > x
+
+name=$(cat x | tr "><" ">\n<" | sed -n -e 's/title>\(\[SubsPlease\].*\).*/\1/p' | fzf | awk '{print $2}')
+
+magnet=$(cat x | tr "><" ">\n<" | sed -n -e "s/link>\(.*$name.*\).*/\1/p")
+
+echo $magnet
