@@ -1,10 +1,15 @@
 #!/bin/sh
 
-echo "please wait.. downloading rss.."
-curl -s https://subsplease.org/rss/?r=720 > x
+echo "please wait.. downloading rss..\n"
+curl -s https://subsplease.org/rss/?r=720 | tr "><" ">\n<"  > .cache/rss
 
-name=$(cat x | tr "><" ">\n<" | sed -n -e 's/title>\(\[SubsPlease\].*\).*/\1/p' | fzf | awk '{print $2}')
+name=$(sed -n -e 's/title>\(\[SubsPlease\].*\)/\1/p' .cache/rss | sed -e 's/\[SubsPlease\] //g' -e 's/(.*//g' | fzf)
 
-magnet=$(cat x | tr "><" ">\n<" | sed -n -e "s/link>\(.*$name.*\).*/\1/p")
+echo "$name\n" 
+
+query=$(echo $name | sed 's/ /\%20/g')
+magnet=$(sed -n -e "s/link>\(.*$query.*\).*/\1/p" .cache/rss)
 
 echo $magnet
+
+./torrent "$magnet"
