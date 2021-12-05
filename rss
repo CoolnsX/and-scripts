@@ -12,7 +12,7 @@ name=$(sed -n -e 's/title>\(\[SubsPlease\].*\)/\1/p' .cache/rss | sed -e 's/\[Su
 echo "$name\n" 
 
 #changing the name into format string for pattern matching
-query=$(echo $name | sed 's/ /\%20/g')
+query=$(printf "$name" | jq -rRs '@uri')
 
 #finding the magnet link containing the exact pattern
 magnet=$(sed -n -e "s/link>\(.*$query.*\).*/\1/p" .cache/rss)
