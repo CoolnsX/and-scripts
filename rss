@@ -17,7 +17,5 @@ query=$(echo $name | sed 's/ /\%20/g')
 #finding the magnet link containing the exact pattern
 magnet=$(sed -n -e "s/link>\(.*$query.*\).*/\1/p" .cache/rss)
 
-echo $magnet
-
 #custom script for downloading torrent using aria2c.. you can use your own bittorrent client here
 ./torrent "$magnet"
