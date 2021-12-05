@@ -1,15 +1,23 @@
 #!/bin/sh
 
-echo "please wait.. downloading rss..\n"
+#script for downloading latest anime episode via torrent using rss provided by website named "subsplease.org"
+
+#parsing rss file
+echo "please wait.. parsing rss..\n"
 curl -s https://subsplease.org/rss/?r=720 | tr "><" ">\n<"  > .cache/rss
 
+#extracting names and providing the menu for selecting particular title
 name=$(sed -n -e 's/title>\(\[SubsPlease\].*\)/\1/p' .cache/rss | sed -e 's/\[SubsPlease\] //g' -e 's/(.*//g' | fzf)
 
 echo "$name\n" 
 
+#changing the name into format string for pattern matching
 query=$(echo $name | sed 's/ /\%20/g')
+
+#finding the magnet link containing the exact pattern
 magnet=$(sed -n -e "s/link>\(.*$query.*\).*/\1/p" .cache/rss)
 
 echo $magnet
 
+#custom script for downloading torrent using aria2c.. you can use your own bittorrent client here
 ./torrent "$magnet"
