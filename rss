@@ -9,6 +9,10 @@ curl -s https://subsplease.org/rss/?r=720 | tr "><" ">\n<"  > .cache/rss
 #extracting names and providing the menu for selecting particular title
 name=$(sed -n -e 's/title>\(\[SubsPlease\].*\)/\1/p' .cache/rss | sed -e 's/\[SubsPlease\] //g' -e 's/(.*//g' | fzf)
 
+if [ -z "$name" ]; then
+	exit
+fi
+
 echo "$name\n" 
 
 #changing the name into format string for pattern matching

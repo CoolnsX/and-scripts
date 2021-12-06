@@ -50,6 +50,12 @@ awk '{print "[S:"$1 ", L:"$2"]" }' $cachedir/seedleech.bw > $cachedir/tmp && mv 
 LINE=$(paste -d\   $cachedir/size.bw $cachedir/seedleech.bw $cachedir/titles.bw | fzf | cut -d\- -f1 | awk '{$1=$1; print}')
 
 url=$(head -n $LINE $cachedir/links.bw | tail -n +$LINE)
+
+if [ -z "$url" ]; then
+	echo "no torrent selected"
+	exit
+fi
+
 fullURL="${baseurl}${url}/"
 echo "$fullURL"
 
