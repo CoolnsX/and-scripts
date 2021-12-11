@@ -17,6 +17,21 @@ full_video()
 	yt-dlp -f best "$1" -o "/storage/7689-5BBD/%(title)s.%(ext)s"
 }
 
+ext_audio()
+{
+	yt-dlp -f 'ba' -x --audio-format mp3 "$1" -o "/storage/7689-5BBD/%(title)s.%(ext)s"
+}
+
+part_audio()
+{
+	video=$1
+	printf "${c_magenta}Enter Starting Point(hh:mm:ss)or(mm:ss)${c_reset}:"
+	read start
+	printf "${c_yellow}Enter Upto Seconds:${c_cyan}"
+	read dur
+	ffmpeg -i $(yt-dlp -f 'ba' --get-url "$video") -ss $start -t $dur -map a -q:a 0 /storage/7689-5BBD/$(date +%s).mp3
+	}
+
 # function to download part of a video and also split it for SNS...
 part_video()
 {
@@ -25,14 +40,7 @@ part_video()
 	read start
 	printf "${c_yellow}Enter Upto Seconds:${c_cyan}"
 	read dur
-	printf "Do you want to split video for SNS?? (y or n) :"
-	read sel
-	if [ "$sel" -eq "y" ]; then		
-		out=$(date +%s)
-		ffmpeg -i $(yt-dlp -f best --get-url "$video") -ss $start -t $dur -map 0 -codec copy -f segment -segment_time 30 /storage/7689-5BBD/${out}-%03d.mp4
-	else
-		ffmpeg -i $(yt-dlp -f best --get-url "$video") -ss $start -t $dur -map 0 -codec copy /storage/7689-5BBD/$(date +%s).mp4
-	fi
+	ffmpeg -i $(yt-dlp -f best --get-url "$video") -ss $start -t $dur -map 0 -codec copy /storage/7689-5BBD/$(date +%s).mp4
 	}
 
 
@@ -40,11 +48,19 @@ part_video()
 x=$(termux-clipboard-get)
 printf "\n${c_blue} video link :${c_magenta}"
 printf "$x\n"
-printf "${c_yellow}Download>>\n${c_green}[f]Full video\n${c_cyan}[p]Part of video\n${c_red}[q]Quit"
+printf "${c_yellow}Download>>\n${c_blue}[a]Audio only\n${c_magenta}[f]part of Audio only\n${c_green}[v]Full video\n${c_cyan}[p]Part of video\n${c_red}[q]Quit"
 printf "\n${c_reset}Enter choice:${c_green}"
 read choice
 case $choice in
+	a)
+		ext_audio "$x"
+		termux-notification -c "audio download hogyi"
+		;;
 	f)
+		part_audio "$x"
+		termux-notification -c "audio download hogyi"
+		;;
+	v)
 		full_video "$x"
 		termux-notification -c "video download hogyi"
 		;;
