@@ -13,13 +13,14 @@ if [ -z "$name" ]; then
 	exit
 fi
 
-echo "$name\n" 
+echo "Downloading $name\n" 
 
 #changing the name into format string for pattern matching
 query=$(printf "$name" | jq -rRs '@uri')
 
 #finding the magnet link containing the exact pattern
 magnet=$(sed -n -e "s/link>\(.*$query.*\).*/\1/p" .cache/rss)
+termux-clipboard-set "$magnet"
 
 #custom script for downloading torrent using aria2c.. you can use your own bittorrent client here
 ./torrent "$magnet"
