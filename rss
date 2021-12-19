@@ -3,8 +3,8 @@
 #script for downloading latest anime episode via torrent using rss provided by website named "subsplease.org"
 
 #parsing rss file
-echo "please wait.. parsing rss..\n"
-curl -s https://subsplease.org/rss/?r=720 | tr "><" ">\n<"  > .cache/rss
+echo "please wait.. parsing Subsplease rss..\n"
+curl -s https://subsplease.org/rss/?r=720 | tr "<" "\n"  > .cache/rss
 
 #extracting names and providing the menu for selecting particular title
 name=$(sed -n -e 's/title>\(\[SubsPlease\].*\)/\1/p' .cache/rss | sed -e 's/\[SubsPlease\] //g' -e 's/(.*//g' | fzf)
