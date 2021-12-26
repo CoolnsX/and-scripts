@@ -9,7 +9,7 @@ else
   query=$1
 fi
 
-baseurl="https://1337x.to"
+baseurl="https://www.1337xx.to"
 cachedir="$HOME/.cache/pirokit"
 query="$(sed 's/ /+/g' <<<$query)"
 
