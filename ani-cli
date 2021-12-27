@@ -32,7 +32,7 @@ help_text () {
 
 die () {
 	printf "$c_red%s$c_reset\n" "$*" >&2
-	exit 1
+	exit 0
 }
 
 err () {

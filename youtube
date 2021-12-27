@@ -55,18 +55,22 @@ case $choice in
 	a)
 		ext_audio "$x"
 		termux-notification -c "audio download hogyi"
+		exit 0
 		;;
 	f)
 		part_audio "$x"
 		termux-notification -c "audio download hogyi"
+		exit 0
 		;;
 	v)
 		full_video "$x"
 		termux-notification -c "video download hogyi"
+		exit 0
 		;;
 	p)
 		part_video "$x"
 		termux-notification -c "video download hogyi"
+		exit 0
 		;;
 	q)
 		break;;

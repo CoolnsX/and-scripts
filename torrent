@@ -9,3 +9,4 @@ fi
 termux-notification -i 2 -t "Torrent" -c "Rukk ja download ho rha hai"
 echo "$magnet"
 (aria2c --dir=/storage/7689-5BBD --seed-time=0 "$magnet" && termux-notification -i 2 -t "Torrent" -c "cheecha download hogyi" || termux-notification -i 2 -t "Torrent" -c "cheecha error!!") 
+exit 0
