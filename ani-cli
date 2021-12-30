@@ -57,7 +57,10 @@ search_eps () {
 
 	curl -s "https://$site/category/$anime_id" |
 	sed -n -E '
-		/^[[:space:]]*<a href="#" class="active" ep_start/{s/.* '\''([0-9]*)'\'' ep_end = '\''([0-9]*)'\''.*/\2/pq}
+		/^[[:space:]]*<a href="#" class="active" ep_start/{
+		s/.* '\''([0-9]*)'\'' ep_end = '\''([0-9]*)'\''.*/\2/p
+		q
+		}
 		'
 }
 
@@ -66,12 +69,16 @@ get_embedded_video_link() {
 	anime_id=$1
 	ep_no=$2
 
-	curl -s "https://$site/$anime_id-episode-$ep_no" | sed -n -E 's/^[[:space:]]*<li class="dowloads"><a href="([^"]*)".*/\1/p'
+	# credits to fork: https://github.com/Dink4n/ani-cli for the fix
+	    curl -s "https://$site/$anime_id-episode-$ep_no" | sed -n -E 's/^[[:space:]]*<li class="dowloads"><a href="([^"]*)".*/\1/p'
 }
 
 get_links () {
 	embedded_video_url="$1"
-	curl -s "$embedded_video_url" | sed -n -E 's/^[[:space:]]*href="([^"]*)".*/\1/p' | grep -Eo "(http|https):\/\/.*com\/cdn.*expiry=[0-9]*" | tail -1 | sed 's/amp;//'   
+	    
+	lol=$(curl -s "$embedded_video_url" | sed -n -E 's/^[[:space:]]*href="([^"]*)".*/\1/p' | sed -n "s/vidstreamingcdn/\0/p" | tail -1 | sed -n 's/\&amp\;/\&/p')
+	[ -z "$lol" ] && lol=$(curl -s "$embedded_video_url" | sed -n -E 's/^[[:space:]]*href="([^"]*)".*/\1/p' | sed -n "s/loadfast/\0/p" | tail -1 | sed -n 's/\&amp\;/\&/p')
+	echo "$lol"
 }
 
 # get query
