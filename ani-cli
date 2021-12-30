@@ -75,8 +75,10 @@ get_embedded_video_link() {
 
 get_links () {
 	embedded_video_url="$1"
-	    curl -s "$embedded_video_url" |
-	    sed -n -E 's/^[[:space:]]*href="([^"]*)".*/\1/p' | sed -n 's/gogo-cdn/\0/p' | tail -1
+	    
+	lol=$(curl -s "$embedded_video_url" | sed -n -E 's/^[[:space:]]*href="([^"]*)".*/\1/p' | sed -n "s/vidstreamingcdn/\0/p" | tail -1 | sed -n 's/\&amp\;/\&/p')
+	[ -z "$lol" ] && lol=$(curl -s "$embedded_video_url" | sed -n -E 's/^[[:space:]]*href="([^"]*)".*/\1/p' | sed -n "s/loadfast/\0/p" | tail -1 | sed -n 's/\&amp\;/\&/p')
+	echo "$lol"
 }
 
 # get query
@@ -180,7 +182,9 @@ open_episode () {
 		episode=$(printf "%03d" $episode)
 		{
 			termux-notification --ongoing -i 0 -t "$anime_id" -c "Downloading episode $episode ..."
-			aria2c -x 16 -s 16 --referer "$embedded_video_url" "$video_url" --dir=/storage/7689-5BBD -o "${anime_id}-${episode}.mp4" && dl=$(status "dl" "$episode") && printf "${c_green}Downloaded episode: %s${c_reset}\n" "$episode" && termux-notification -i 1 -t "$anime_id" -c "Downloaded episode $dl" ||
+	#		aria2c -x 16 -s 16 --referer "$embedded_video_url" "$video_url" --dir=/storage/7689-5BBD -o "${anime_id}-${episode}.mp4" && dl=$(status "dl" "$episode") && 
+			aria2c --referer "$embedded_video_url" "$video_url" --dir=/storage/7689-5BBD -o "${anime_id}-${episode}.mp4" && dl=$(status "dl" "$episode") && 
+				printf "${c_green}Downloaded episode: %s${c_reset}\n" "$episode" && termux-notification -i 1 -t "$anime_id" -c "Downloaded episode $dl" ||
 				(printf "${c_red}Download failed episode: %s${c_reset}\n" "$episode" && ndl=$(status "ndl" "$episode") && termux-notification -i 2 -t "$anime_id" -c "Downloaded failed episode $ndl")
 			termux-notification-remove 0
 		}
@@ -281,6 +285,7 @@ while :; do
 			;;
 
 		*)
+			rm -f dl ndl
 			die "invalid choice"
 			;;
 	esac

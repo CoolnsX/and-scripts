@@ -14,7 +14,7 @@ c_reset="\033[0m"
 #function to download full video
 full_video()
 {
-	yt-dlp -f best "$1" -o "/storage/7689-5BBD/%(title)s.%(ext)s"
+	yt-dlp -f b "$1" -o "/storage/7689-5BBD/%(title)s.%(ext)s"
 }
 
 ext_audio()
