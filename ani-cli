@@ -75,10 +75,7 @@ get_embedded_video_link() {
 
 get_links () {
 	embedded_video_url="$1"
-	    
-	lol=$(curl -s "$embedded_video_url" | sed -n -E 's/^[[:space:]]*href="([^"]*)".*/\1/p' | sed -n "s/vidstreamingcdn/\0/p" | tail -1 | sed -n 's/\&amp\;/\&/p')
-	[ -z "$lol" ] && lol=$(curl -s "$embedded_video_url" | sed -n -E 's/^[[:space:]]*href="([^"]*)".*/\1/p' | sed -n "s/loadfast/\0/p" | tail -1 | sed -n 's/\&amp\;/\&/p')
-	echo "$lol"
+	curl -s "$embedded_video_url" | sed -n -E 's/^[[:space:]]*href="([^"]*)".*/\1/p' | grep -Eo "(http|https):\/\/.*com\/cdn.*expiry=[0-9]*" | tail -1 | sed 's/amp;//'   
 }
 
 # get query
