@@ -74,8 +74,16 @@ get_embedded_video_link() {
 }
 
 get_links () {
-	embedded_video_url="$1"
-	curl -s "$embedded_video_url" | sed -n -E 's/^[[:space:]]*href="([^"]*)".*/\1/p' | grep -Eo "(http|https):\/\/.*com\/cdn.*expiry=[0-9]*" | tail -1 | sed 's/amp;//'   
+	dpage_link="$1"
+	sb_url=$(curl -s "$dpage_link" |
+	    sed -n -E 's/^[[:space:]]*href="([^"]*)".*/\1/p' | grep -oE ".*sbplay.*")
+	link=$(curl -s "$sb_url" | sed -n -E 's/.*a href="#" onclick="download_video([^"]*)".*/\1/p' | head -1)
+
+	i=$(printf "$link" | cut -d\' -f2)
+	h=$(printf "$link" | cut -d\' -f6)
+	lol=$(curl -s "https://sbplay2.com/dl?op=download_orig&id=$i&mode=h&hash=$h" | sed -n -E 's/<a href="([^"]*.mp4)".*/\1/p')
+	[ -z "$lol" ] && lol=$(curl -s "https://sbplay2.com/dl?op=download_orig&id=$i&mode=n&hash=$h" | sed -n -E 's/<a href="([^"]*.mp4)".*/\1/p')
+	printf "$lol"
 }
 
 # get query
@@ -83,6 +91,7 @@ get_search_query () {
 	if [ -z "$*" ]; then
 		printf "Search Anime: "
 		read -r query
+		query=$(printf "$query" | tr ' ' '-')
 	else
 		query=$*
 	fi
@@ -169,18 +178,16 @@ open_episode () {
 	embedded_video_url=$(get_embedded_video_link "$anime_id" "$episode")
 	video_url=$(get_links "$embedded_video_url")
 	
+	echo "$video_url"
 	if [ $is_download -eq 0 ]; then
 		termux-open --content-type video "$video_url"
 	else
 		printf "\n${c_blue}Downloading episode: $episode ...\n${c_reset}"
-		echo "$embedded_video_url"
-		echo "$video_url"
 		# add 0 padding to the episode name
 		episode=$(printf "%03d" $episode)
 		{
 			termux-notification --ongoing -i 0 -t "$anime_id" -c "Downloading episode $episode ..."
-	#		aria2c -x 16 -s 16 --referer "$embedded_video_url" "$video_url" --dir=/storage/7689-5BBD -o "${anime_id}-${episode}.mp4" && dl=$(status "dl" "$episode") && 
-			aria2c --referer "$embedded_video_url" "$video_url" --dir=/sdcard -o "${anime_id}-${episode}.mp4" && dl=$(status "dl" "$episode") && 
+			aria2c "$video_url" --dir=/storage/7689-5BBD -o "${anime_id}-${episode}.mp4" --download-result=hide && dl=$(status "dl" "$episode") && 
 				printf "${c_green}Downloaded episode: %s${c_reset}\n" "$episode" && termux-notification -i 1 -t "$anime_id" -c "Downloaded episode $dl" ||
 				(printf "${c_red}Download failed episode: %s${c_reset}\n" "$episode" && ndl=$(status "ndl" "$episode") && termux-notification -i 2 -t "$anime_id" -c "Downloaded failed episode $ndl")
 			termux-notification-remove 0
@@ -193,7 +200,7 @@ open_episode () {
 ############
 
 # to clear the colors when exited using SIGINT
-trap "printf '$c_reset'" INT HUP
+trap "printf '$c_reset';exit 0" INT HUP
 
 # option parsing
 is_download=0
