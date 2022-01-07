@@ -1,10 +1,7 @@
 #!/bin/sh
 
-# dependencies: grep sed curl video_player
-# video_player ( needs to be able to play urls )
-
 prog="ani-cli"
-site="gogoanime.wiki"
+site="gogoanime.film"
 
 c_red="\033[1;31m"
 c_green="\033[1;32m"
@@ -17,7 +14,6 @@ c_reset="\033[0m"
 status(){
 	echo $2 >> $1
 	echo $(cat $1 | tr "\n" ",")
-	
 }
 
 help_text () {
@@ -27,6 +23,7 @@ help_text () {
 	USAGE: $prog <query>
 	 -h	 show this help text
 	 -d	 download episode
+	 -c	 cast episode
 	EOF
 }
 
@@ -69,20 +66,15 @@ get_embedded_video_link() {
 	anime_id=$1
 	ep_no=$2
 
-	# credits to fork: https://github.com/Dink4n/ani-cli for the fix
-	    curl -s "https://$site/$anime_id-episode-$ep_no" | sed -n -E 's/^[[:space:]]*<li class="dowloads"><a href="([^"]*)".*/\1/p'
+	curl -s "https://$site/$anime_id-episode-$ep_no" | sed -n -E 's/.*rel="13" data-video="([^"]*)".*/\1/p' | cut -d/ -f5
 }
 
 get_links () {
 	dpage_link="$1"
-	sb_url=$(curl -s "$dpage_link" |
-	    sed -n -E 's/^[[:space:]]*href="([^"]*)".*/\1/p' | grep -oE ".*sbplay.*")
-	link=$(curl -s "$sb_url" | sed -n -E 's/.*a href="#" onclick="download_video([^"]*)".*/\1/p' | head -1)
+	h=$(curl -s "https://sbplay2.com/d/$dpage_link" | sed -n -E 's/.*a href="#" onclick="download_video([^"]*)".*/\1/p' | head -1 | cut -d\' -f6)
 
-	i=$(printf "$link" | cut -d\' -f2)
-	h=$(printf "$link" | cut -d\' -f6)
-	lol=$(curl -s "https://sbplay2.com/dl?op=download_orig&id=$i&mode=h&hash=$h" | sed -n -E 's/<a href="([^"]*.mp4)".*/\1/p')
-	[ -z "$lol" ] && lol=$(curl -s "https://sbplay2.com/dl?op=download_orig&id=$i&mode=n&hash=$h" | sed -n -E 's/<a href="([^"]*.mp4)".*/\1/p')
+	lol=$(curl -s "https://sbplay2.com/dl?op=download_orig&id=$dpage_link&mode=h&hash=$h" | sed -n -E 's/<a href="([^"]*.mp4)".*/\1/p')
+	[ -z "$lol" ] &&  lol=$(curl -s "https://sbplay2.com/dl?op=download_orig&id=$dpage_link&mode=n&hash=$h" | sed -n -E 's/<a href="([^"]*.mp4)".*/\1/p')
 	printf "$lol"
 }
 
@@ -91,10 +83,10 @@ get_search_query () {
 	if [ -z "$*" ]; then
 		printf "Search Anime: "
 		read -r query
-		query=$(printf "$query" | tr ' ' '-')
 	else
 		query=$*
 	fi
+	query=$(printf "$query" | tr ' ' '-')
 }
 
 
@@ -180,7 +172,11 @@ open_episode () {
 	
 	echo "$video_url"
 	if [ $is_download -eq 0 ]; then
-		termux-open --content-type video "$video_url"
+		if [ $is_cast -eq 0 ]; then
+			termux-open --content-type video "$video_url"
+		else
+			catt cast "$video_url"
+		fi
 	else
 		printf "\n${c_blue}Downloading episode: $episode ...\n${c_reset}"
 		# add 0 padding to the episode name
@@ -203,8 +199,9 @@ open_episode () {
 trap "printf '$c_reset';exit 0" INT HUP
 
 # option parsing
-is_download=1
-while getopts 'hdH' OPT; do
+is_download=0
+is_cast=0
+while getopts 'hdc' OPT; do
 	case $OPT in
 		h)
 			help_text
@@ -212,6 +209,9 @@ while getopts 'hdH' OPT; do
 			;;
 		d)
 			is_download=1
+			;;
+		c)
+			is_cast=1
 			;;
 	esac
 done
