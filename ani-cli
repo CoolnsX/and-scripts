@@ -23,7 +23,6 @@ help_text () {
 	USAGE: $prog <query>
 	 -h	 show this help text
 	 -d	 download episode
-	 -c	 cast episode
 	EOF
 }
 
@@ -66,16 +65,7 @@ get_embedded_video_link() {
 	anime_id=$1
 	ep_no=$2
 
-	curl -s "https://$site/$anime_id-episode-$ep_no" | sed -n -E 's/.*rel="13" data-video="([^"]*)".*/\1/p' | cut -d/ -f5
-}
-
-get_links () {
-	dpage_link="$1"
-	h=$(curl -s "https://sbplay2.com/d/$dpage_link" | sed -n -E 's/.*a href="#" onclick="download_video([^"]*)".*/\1/p' | head -1 | cut -d\' -f6)
-
-	lol=$(curl -s "https://sbplay2.com/dl?op=download_orig&id=$dpage_link&mode=h&hash=$h" | sed -n -E 's/<a href="([^"]*.mp4)".*/\1/p')
-	[ -z "$lol" ] &&  lol=$(curl -s "https://sbplay2.com/dl?op=download_orig&id=$dpage_link&mode=n&hash=$h" | sed -n -E 's/<a href="([^"]*.mp4)".*/\1/p')
-	printf "$lol"
+	curl -s "https://$site/$anime_id-episode-$ep_no" | sed -n -E 's/^[[:space:]]*<li class="dowloads"><a href="([^"]*)".*/\1/p'
 }
 
 # get query
@@ -168,27 +158,23 @@ open_episode () {
 	printf "\nGetting data for episode %d\n" $episode
 
 	embedded_video_url=$(get_embedded_video_link "$anime_id" "$episode")
-	video_url=$(get_links "$embedded_video_url")
+	echo "$embedded_video_url"
+	echo "opening in browser"
+	termux-open-url "$embedded_video_url"
+	read -r fake 
+	video_url=$(termux-clipboard-get)
 	
 	echo "$video_url"
-	if [ $is_download -eq 0 ]; then
-		if [ $is_cast -eq 0 ]; then
-			termux-open --content-type video "$video_url"
-		else
-			catt cast "$video_url"
-		fi
-	else
-		printf "\n${c_blue}Downloading episode: $episode ...\n${c_reset}"
-		# add 0 padding to the episode name
-		episode=$(printf "%03d" $episode)
-		{
-			termux-notification --ongoing -i 0 -t "$anime_id" -c "Downloading episode $episode ..."
-			aria2c --referer="https://sbplay2.com" "$video_url" --dir=/storage/7689-5BBD -o "${anime_id}-${episode}.mp4" --download-result=hide && dl=$(status "dl" "$episode") && 
-				printf "${c_green}Downloaded episode: %s${c_reset}\n" "$episode" && termux-notification -i 1 -t "$anime_id" -c "Downloaded episode $dl" ||
-				(printf "${c_red}Download failed episode: %s${c_reset}\n" "$episode" && ndl=$(status "ndl" "$episode") && termux-notification -i 2 -t "$anime_id" -c "Downloaded failed episode $ndl")
-			termux-notification-remove 0
-		}
-	fi
+	printf "\n${c_blue}Downloading episode: $episode ...\n${c_reset}"
+	# add 0 padding to the episode name
+	episode=$(printf "%03d" $episode)
+	{
+		termux-notification --ongoing -i 0 -t "$anime_id" -c "Downloading episode $episode ..."
+		aria2c --referer="$embedded_video_url" "$video_url" --dir=/storage/7689-5BBD -o "${anime_id}-${episode}.mp4" --download-result=hide && dl=$(status "dl" "$episode") && 
+			printf "${c_green}Downloaded episode: %s${c_reset}\n" "$episode" && termux-notification -i 1 -t "$anime_id" -c "Downloaded episode $dl" ||
+			(printf "${c_red}Download failed episode: %s${c_reset}\n" "$episode" && ndl=$(status "ndl" "$episode") && termux-notification -i 2 -t "$anime_id" -c "Downloaded failed episode $ndl")
+		termux-notification-remove 0
+	}
 }
 
 ############
