@@ -23,6 +23,7 @@ help_text () {
 	USAGE: $prog <query>
 	 -h	 show this help text
 	 -d	 download episode
+	 -c	 cast episode on tv
 	EOF
 }
 
@@ -60,12 +61,29 @@ search_eps () {
 		'
 }
 
-get_embedded_video_link() {
+embade_link() {
 	# get the download page url
 	anime_id=$1
 	ep_no=$2
 
-	curl -s "https://$site/$anime_id-episode-$ep_no" | sed -n -E 's/^[[:space:]]*<li class="dowloads"><a href="([^"]*)".*/\1/p'
+	curl -s "https://$site/$anime_id-episode-$ep_no" |
+	sed -n -E 's/^[[:space:]]*<a href="#" rel="100" data-video="([^"]*)".*/\1/p' |
+	sed 's/^/https:/g'
+}
+
+decrypt_link() {
+    ajax_url='https://gogoplay.io/encrypt-ajax.php'
+
+    #get the id from the url
+    video_id=$(printf "$1" | cut -d\? -f2 | cut -d\& -f1 | sed 's/id=//g')
+    
+    #construct ajax parameters
+    secret_key='3235373436353338353932393338333936373634363632383739383333323838'
+    iv='34323036393133333738303038313335'
+    ajax=$(printf "$video_id" | openssl enc -aes256  -K "$secret_key" -iv "$iv" -a)
+    
+    #send the request to the ajax url
+    curl -s -H 'x-requested-with:XMLHttpRequest' "$ajax_url" -d "id=$ajax" -d "time=69420691337800813569" | jq -r '.source[].file' | head -4 | tail -1
 }
 
 # get query
@@ -157,24 +175,27 @@ open_episode () {
 
 	printf "\nGetting data for episode %d\n" $episode
 
-	embedded_video_url=$(get_embedded_video_link "$anime_id" "$episode")
-	echo "$embedded_video_url"
-	echo "opening in browser"
-	termux-open-url "$embedded_video_url"
-	read -r fake 
-	video_url=$(termux-clipboard-get)
-	
+	embedded_url=$(embade_link "$anime_id" "$episode")
+	echo "$embedded_url"
+	video_url=$(decrypt_link "$embedded_url")
 	echo "$video_url"
-	printf "\n${c_blue}Downloading episode: $episode ...\n${c_reset}"
-	# add 0 padding to the episode name
-	episode=$(printf "%03d" $episode)
-	{
-		termux-notification --ongoing -i 0 -t "$anime_id" -c "Downloading episode $episode ..."
-		aria2c --referer="$embedded_video_url" "$video_url" --dir=/storage/7689-5BBD -o "${anime_id}-${episode}.mp4" --download-result=hide && dl=$(status "dl" "$episode") && 
-			printf "${c_green}Downloaded episode: %s${c_reset}\n" "$episode" && termux-notification -i 1 -t "$anime_id" -c "Downloaded episode $dl" ||
-			(printf "${c_red}Download failed episode: %s${c_reset}\n" "$episode" && ndl=$(status "ndl" "$episode") && termux-notification -i 2 -t "$anime_id" -c "Downloaded failed episode $ndl")
-		termux-notification-remove 0
-	}
+	if [ $is_download -eq 0 ]; then
+		if [ $is_cast -eq 0 ]; then
+			termux-open --content-type video "$video_url"
+		else
+			catt cast "$video_url"
+	else
+		printf "\n${c_blue}Downloading episode: $episode ...\n${c_reset}"
+		# add 0 padding to the episode name
+		episode=$(printf "%03d" $episode)
+		{
+			termux-notification --ongoing -i 0 -t "$anime_id" -c "Downloading episode $episode ..."
+			aria2c --referer="$embedded_url" "$video_url" --dir=/storage/7689-5BBD -o "${anime_id}-${episode}.mp4" --download-result=hide && dl=$(status "dl" "$episode") && 
+				printf "${c_green}Downloaded episode: %s${c_reset}\n" "$episode" && termux-notification -i 1 -t "$anime_id" -c "Downloaded episode $dl" ||
+				(printf "${c_red}Download failed episode: %s${c_reset}\n" "$episode" && ndl=$(status "ndl" "$episode") && termux-notification -i 2 -t "$anime_id" -c "Downloaded failed episode $ndl")
+			termux-notification-remove 0
+		}
+	fi
 }
 
 ############

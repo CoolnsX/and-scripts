@@ -1,0 +1,3 @@
+#!/bin/sh
+
+aria2c --dir=/storage/7689-5BBD --bt-metadata-only=true --bt-save-metadata=true "$(termux-clipboard-get)"
