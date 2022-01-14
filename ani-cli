@@ -184,6 +184,7 @@ open_episode () {
 			termux-open --content-type video "$video_url"
 		else
 			catt cast "$video_url"
+		fi
 	else
 		printf "\n${c_blue}Downloading episode: $episode ...\n${c_reset}"
 		# add 0 padding to the episode name
