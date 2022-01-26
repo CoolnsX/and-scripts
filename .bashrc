@@ -2,7 +2,7 @@ alias v="nvim"
 alias cp="cp -v"
 alias rm="rm -v"
 alias ll="ls -alh"
-alias aria="aria2c -x 16 -s 16 -d /storage/7689-5BBD"
+alias aria="aria2c -x 16 -s 16 --summary-interval=0 -d /storage/7689-5BBD"
 
             __main() {
                 local major="${BASH_VERSINFO[0]}"

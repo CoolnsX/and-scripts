@@ -60,8 +60,7 @@ fullURL="${baseurl}${url}/"
 echo "$fullURL"
 
 # Requesting page for magnet link
-curl -s $fullURL -o $cachedir/tmp.html
-magnet=$(grep -Po "magnet.*\" " $cachedir/tmp.html | tr -d \")
+magnet=$(curl -s "$fullURL" | grep -Po "magnet.*\" " | tr -d \")
 
 termux-clipboard-set "$magnet"
 ./torrent "$magnet"

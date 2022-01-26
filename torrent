@@ -7,7 +7,7 @@ c_magenta="\033[1;35m"                                          c_cyan="\033[1;3
 full_tor(){
     tput reset
     termux-notification -i 2 -t "Torrent" -c "Rukk ja download ho rha hai"
-    (aria2c --dir=/storage/7689-5BBD --seed-time=0 "$1" && termux-notification -i 2 -t "Torrent" -c "cheecha download hogyi" || termux-notification -i 2 -t "Torrent" -c "cheecha error!!") 
+    (aria2c --summary-interval=0 --dir=/storage/7689-5BBD --seed-time=0 "$1" && termux-notification -i 2 -t "Torrent" -c "cheecha download hogyi" || termux-notification -i 2 -t "Torrent" -c "cheecha error!!") 
 }
 
 part_tor(){
@@ -17,7 +17,7 @@ part_tor(){
     printf "\nEnter index of the file to download:"
     read -r ind
     termux-notification -i 2 -t "Torrent" -c "Rukk ja download ho rha hai"
-    (aria2c --select-file=$ind --dir=/storage/7689-5BBD --seed-time=0 $HOME/.cache/*.torrent && termux-notification -i 2 -t "Torrent" -c "cheecha download hogyi" || termux-notification -i 2 -t "Torrent" -c "cheecha error!!") 
+    (aria2c --summary-interval=0 --select-file=$ind --dir=/storage/7689-5BBD --seed-time=0 $HOME/.cache/*.torrent && termux-notification -i 2 -t "Torrent" -c "cheecha download hogyi" || termux-notification -i 2 -t "Torrent" -c "cheecha error!!") 
     rm -f $HOME/.cache/*.torrent
 }
 
