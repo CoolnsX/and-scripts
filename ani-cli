@@ -191,7 +191,7 @@ open_episode () {
 		episode=$(printf "%03d" $episode)
 		{
 			termux-notification --ongoing -i 0 -t "$anime_id" -c "Downloading episode $episode ..."
-			aria2c --referer="$embedded_url" "$video_url" --dir=/storage/7689-5BBD -o "${anime_id}-${episode}.mp4" --download-result=hide && dl=$(status "dl" "$episode") && 
+			aria2c -x 16 -s 16 --referer="$embedded_url" "$video_url" --dir=/storage/7689-5BBD -o "${anime_id}-${episode}.mp4" --download-result=hide && dl=$(status "dl" "$episode") && 
 				printf "${c_green}Downloaded episode: %s${c_reset}\n" "$episode" && termux-notification -i 1 -t "$anime_id" -c "Downloaded episode $dl" ||
 				(printf "${c_red}Download failed episode: %s${c_reset}\n" "$episode" && ndl=$(status "ndl" "$episode") && termux-notification -i 2 -t "$anime_id" -c "Downloaded failed episode $ndl")
 			termux-notification-remove 0
