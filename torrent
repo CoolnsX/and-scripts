@@ -14,7 +14,7 @@ part_tor(){
     aria2c --dir=$HOME/.cache --bt-metadata-only=true --bt-save-metadata=true "$1"
     tput reset
     aria2c --show-files=true $HOME/.cache/*.torrent 
-    printf "\nEnter index of the file to download:"
+    printf "\nEnter idx(default all):"
     read -r ind
     termux-notification -i 2 -t "Torrent" -c "Rukk ja download ho rha hai"
     (aria2c --summary-interval=0 --select-file=$ind --dir=/storage/7689-5BBD --seed-time=0 $HOME/.cache/*.torrent && termux-notification -i 2 -t "Torrent" -c "cheecha download hogyi" || termux-notification -i 2 -t "Torrent" -c "cheecha error!!") 
@@ -30,7 +30,7 @@ else
 fi
 
 echo "$magnet"
-printf "\n${c_yellow}Download>>\n${c_green}[f]ull torrent\n${c_cyan}[p]artial torrent \n${c_red}[q]uit"
+printf "${c_yellow}Download>>\n${c_green}[f]ull torrent\n${c_cyan}[p]artial torrent \n${c_red}[q]uit"
 printf "${c_reset}\n\tenter choice:"
 read -r ch
 case $ch in

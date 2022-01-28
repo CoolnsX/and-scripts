@@ -7,19 +7,20 @@ echo "please wait.. parsing Subsplease rss..\n"
 curl -s https://subsplease.org/rss/?r=720 | tr "<" "\n"  > .cache/rss
 
 #extracting names and providing the menu for selecting particular title
-name=$(sed -n -e 's/title>\(\[.*\)/\1/p' .cache/rss | sed -e 's/\[SubsPlease\] //g' -e 's/(.*//g' | fzf)
+name=$(sed -n -e 's/title>\(\[.*\)/\1/p' .cache/rss | sed -e 's/\[SubsPlease\] //g' | fzf)
 
 if [ -z "$name" ]; then
 	exit
 fi
 
-echo "Downloading $name\n" 
+echo "Downloading $name" 
 
 #changing the name into format string for pattern matching
-query=$(printf "$name" | jq -rRs '@uri')
+query=$(printf "$name" | sed -e 's/(.*//g' | jq -rRs '@uri')
 
 #finding the magnet link containing the exact pattern
 magnet=$(sed -n -e "s/link>\(.*$query.*\).*/\1/p" .cache/rss)
+
 termux-clipboard-set "$magnet"
 
 #custom script for downloading torrent using aria2c.. you can use your own bittorrent client here

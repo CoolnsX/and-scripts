@@ -56,11 +56,10 @@ if [ -z "$url" ]; then
 	exit
 fi
 
-fullURL="${baseurl}${url}/"
-echo "$fullURL"
+echo "${baseurl}${url}"
 
 # Requesting page for magnet link
-magnet=$(curl -s "$fullURL" | grep -Po "magnet.*\" " | tr -d \")
+magnet=$(curl -s "${baseurl}${url}" | grep -Po "magnet.*\" " | tr -d \")
 
 termux-clipboard-set "$magnet"
 ./torrent "$magnet"
