@@ -3,7 +3,7 @@ alias v="nvim"
 alias cp="cp -v"
 alias grep="grep --color=auto"
 alias ll="ls --color=auto -alh"
-alias ls="ls --color=auto -hl"
+alias ls="ls --color=auto"
 
 source $PREFIX/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 
