@@ -5,11 +5,7 @@ alias grep="grep --color=auto"
 alias ll="ls --color=auto -alh"
 alias ls="ls --color=auto -hl"
 
-#source /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
-#
-#ZSH_HIGHLIGHT_STYLES[suffix-alias]=fg=#00F5FF,underline
-#ZSH_HIGHLIGHT_STYLES[precommand]=fg=#00F5FF,underline
-#ZSH_HIGHLIGHT_STYLES[arg0]=fg=#00F5FF
+source $PREFIX/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 
 HISTFILE=~/.histfile
 HISTSIZE=200
