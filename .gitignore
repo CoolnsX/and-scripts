@@ -13,6 +13,7 @@ ndl
 storage/
 token
 .gitconfig
+.histfile
 .ssh/
 .termux_authinfo
 .shortcuts
