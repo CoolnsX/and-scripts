@@ -2,11 +2,11 @@
 
 mkdir -p $HOME/.cache/pirokit
 
-if [ -z $1 ]; then
+if [ -z $* ]; then
   printf "Search Torrent: "
   read -r query
 else
-  query=$1
+  query=$*
 fi
 
 baseurl="https://www.1337xx.to"

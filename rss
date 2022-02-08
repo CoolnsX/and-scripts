@@ -7,14 +7,14 @@ echo "please wait.. parsing Subsplease rss..\n"
 curl -s https://subsplease.org/rss/?r=720 | tr "<" "\n" > .cache/rss
 
 #extracting names and providing the menu for selecting particular title
-name=$(sed -n -e 's/title>\(\[.*\)/\1/p' .cache/rss | sed -e 's/\[SubsPlease\] //g' | fzf)
+name=$(sed -n -e 's/title>\[.*Please\] \(.*\)/\1/p' .cache/rss | fzf)
 
 [ -z "$name" ] && exit 0
 
 echo "Downloading $name" 
 
 #extracting id from anime_name_[id].mkv
-id=$(printf "$name" | cut -d\[ -f2 | cut -d\] -f1)
+id=$(printf "$name" | sed -n -e 's/.*\[\(.*\)\].*/\1/p')
 
 #finding the magnet link containing the exact pattern
 magnet=$(sed -n -e "s/link>\(.*$id.*\).*/\1/p" .cache/rss | sed 's/amp;//g')
