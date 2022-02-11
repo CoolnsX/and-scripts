@@ -24,25 +24,21 @@ ext_audio()
 
 part_audio()
 {
-	video=$1
 	printf "${c_magenta}Enter Starting Point(hh:mm:ss)or(mm:ss)${c_reset}:"
 	read start
 	printf "${c_yellow}Enter Upto Seconds:${c_cyan}"
 	read dur
-	ffmpeg -i $(yt-dlp -f 'ba' --get-url "$video") -ss $start -t $dur -map a -q:a 0 /storage/7689-5BBD/$(date +%s).mp3
-	}
+	ffmpeg -i $(yt-dlp -f 'ba' --get-url "$1") -ss $start -t $dur -map a -q:a 0 /storage/7689-5BBD/$(date +%s).mp3
+}
 
-# function to download part of a video and also split it for SNS...
 part_video()
 {
-	video=$1
 	printf "${c_magenta}Enter Starting Point(hh:mm:ss)or(mm:ss)${c_reset}:"
 	read start
 	printf "${c_yellow}Enter Upto Seconds:${c_cyan}"
 	read dur
-	ffmpeg -i $(yt-dlp -f best --get-url "$video") -ss $start -t $dur -map 0 -codec copy /storage/7689-5BBD/$(date +%s).mp4
-	}
-
+	ffmpeg -i $(yt-dlp -f b --get-url "$1") -ss $start -t $dur -map 0 -codec copy /storage/7689-5BBD/$(date +%s).mp4
+}
 
 #program starts from here..
 x=$(termux-clipboard-get)
@@ -54,22 +50,22 @@ read choice
 case $choice in
 	a)
 		ext_audio "$x"
-		termux-notification -c "audio download hogyi"
+		termux-notification -c "audio downloaded"
 		exit 0
 		;;
 	f)
 		part_audio "$x"
-		termux-notification -c "audio download hogyi"
+		termux-notification -c "audio downloaded"
 		exit 0
 		;;
 	v)
 		full_video "$x"
-		termux-notification -c "video download hogyi"
+		termux-notification -c "video downloaded"
 		exit 0
 		;;
 	p)
 		part_video "$x"
-		termux-notification -c "video download hogyi"
+		termux-notification -c "video downloaded"
 		exit 0
 		;;
 	q)
