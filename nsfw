@@ -18,14 +18,11 @@ for i in $(seq $pg)
 do
 	echo "downloading $i.jpg"
 	i_t=$(printf "%03d" $i)
-	setsid -f curl -s "https://i.nhentai.net/galleries/$id/$i.jpg" -o "$dir/$i_t.jpg"
+	setsid -f curl -s "https://i.nhentai.net/galleries/$id/$i.jpg" -o "$dir/$i_t"
+	sleep 2
 done
-t=$((pg/2))
-echo "waiting $t sec for images to download completely"
-sleep $t
+echo "waiting 3 sec for images to download completely"
+sleep 3
 echo "converting images to pdf"
-convert "$dir/*.jpg" "7689-5BBD/$num.pdf"
-echo "saved pdf as 7689-5BBD/$num.pdf"
-echo "enjoy 😏😏"
-
+convert "$dir/*" "7689-5BBD/$num.pdf" && echo "saved pdf as 7689-5BBD/$num.pdf\nenjoy 😏😏"
 rm -rf $dir
