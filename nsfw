@@ -1,9 +1,15 @@
 #!/bin/sh
 
-printf "enter number:"
-read -r num
-mkdir -p .cache/$num
+if [ -z "$*" ]; then
+	printf "enter number:"
+	read -r num
+else
+	num=$*
+fi
+
+mkdir -p $HOME/.cache/$num
 dir="$HOME/.cache/$num"
+trap "rm -rf $dir;exit 0" INT HUP
 webp="$(curl -s "https://nhentai.net/g/$num/1/")"
 id=$(printf "$webp" | grep -Eo 'galleries.*jpg' | cut -d\/ -f2)
 pg=$(printf "$webp" | grep -oE 'pages">([^"]*)</' | cut -d\> -f2 | cut -d\< -f1 | head -1)
