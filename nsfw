@@ -1,0 +1,25 @@
+#!/bin/sh
+
+printf "enter number:"
+read -r num
+mkdir -p .cache/$num
+dir="$HOME/.cache/$num"
+webp="$(curl -s "https://nhentai.net/g/$num/1/")"
+id=$(printf "$webp" | grep -Eo 'galleries.*jpg' | cut -d\/ -f2)
+pg=$(printf "$webp" | grep -oE 'pages">([^"]*)</' | cut -d\> -f2 | cut -d\< -f1 | head -1)
+
+for i in $(seq $pg)
+do
+	echo "downloading $i.jpg"
+	i_t=$(printf "%03d" $i)
+	setsid -f curl -s "https://i.nhentai.net/galleries/$id/$i.jpg" -o "$dir/$i_t.jpg"
+done
+t=$((pg/2))
+echo "waiting $t sec for images to download completely"
+sleep $t
+echo "converting images to pdf"
+convert "$dir/*.jpg" "7689-5BBD/$num.pdf"
+echo "saved pdf as 7689-5BBD/$num.pdf"
+echo "enjoy 😏😏"
+
+rm -rf $dir
