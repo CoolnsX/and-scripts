@@ -11,16 +11,17 @@ mkdir -p $HOME/.cache/$num
 dir="$HOME/.cache/$num"
 trap "rm -rf $dir;exit 0" INT HUP
 webp="$(curl -s "https://nhentai.net/g/$num/1/")"
-id=$(printf "$webp" | grep -Eo 'galleries.*jpg' | cut -d\/ -f2)
-pg=$(printf "$webp" | grep -oE 'pages">([^"]*)</' | cut -d\> -f2 | cut -d\< -f1 | head -1)
+id=$(printf "$webp" | sed -nE 's/.*galleries\/([^"]*)\/.*/\1/p')
+pg=$(printf "$webp" | sed -nE 's/.*pages">(.*)/\1/p' | cut -d\< -f1)
 
 for i in $(seq $pg)
 do
 	echo "downloading $i.jpg"
 	i_t=$(printf "%03d" $i)
 	setsid -f curl -s "https://i.nhentai.net/galleries/$id/$i.jpg" -o "$dir/$i_t"
-	sleep 2
+	sleep 1
 done
+
 echo "waiting 3 sec for images to download completely"
 sleep 3
 echo "converting images to pdf"
