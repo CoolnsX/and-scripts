@@ -22,22 +22,15 @@ ext_audio()
 	yt-dlp -f 'ba' -x --audio-format mp3 "$1" -o "/storage/7689-5BBD/%%(title)s.%%(ext)s"
 }
 
-part_audio()
+part()
 {
 	printf "${c_magenta}Enter Starting Point(hh:mm:ss)or(mm:ss)${c_reset}:"
 	read start
 	printf "${c_yellow}Enter Upto Seconds:${c_cyan}"
 	read dur
+	[ -z "$2" ] &&
+	ffmpeg -i $(yt-dlp -f b --get-url "$1") -ss $start -t $dur -map 0 -codec copy /storage/7689-5BBD/$(date +%s).mp4 ||
 	ffmpeg -i $(yt-dlp -f 'ba' --get-url "$1") -ss $start -t $dur -map a -q:a 0 /storage/7689-5BBD/$(date +%s).mp3
-}
-
-part_video()
-{
-	printf "${c_magenta}Enter Starting Point(hh:mm:ss)or(mm:ss)${c_reset}:"
-	read start
-	printf "${c_yellow}Enter Upto Seconds:${c_cyan}"
-	read dur
-	ffmpeg -i $(yt-dlp -f b --get-url "$1") -ss $start -t $dur -map 0 -codec copy /storage/7689-5BBD/$(date +%s).mp4
 }
 
 #program starts from here..
@@ -49,24 +42,16 @@ printf "\n${c_reset}Enter choice:${c_green}"
 read choice
 case $choice in
 	a)
-		ext_audio "$x"
-		termux-notification -c "audio downloaded"
-		exit 0
+		ext_audio "$x" && termux-notification -c "audio downloaded"
 		;;
 	f)
-		part_audio "$x"
-		termux-notification -c "audio downloaded"
-		exit 0
+		part "$x" "1" && termux-notification -c "audio downloaded"
 		;;
 	v)
-		full_video "$x"
-		termux-notification -c "video downloaded"
-		exit 0
+		full_video "$x" && termux-notification -c "video downloaded"
 		;;
 	p)
-		part_video "$x"
-		termux-notification -c "video downloaded"
-		exit 0
+		part "$x" && termux-notification -c "video downloaded"
 		;;
 	q)
 		break;;
