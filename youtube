@@ -12,13 +12,10 @@ c_cyan="\033[1;36m"
 c_reset="\033[0m"
 
 #function to download full video
-full_video()
+full()
 {
-	yt-dlp "$1" -o "/storage/7689-5BBD/%(title)s.%(ext)s"
-}
-
-ext_audio()
-{
+	[ -z "$2" ] &&
+	yt-dlp "$1" -o "/storage/7689-5BBD/%(title)s.%(ext)s" ||
 	yt-dlp -f 'ba' -x --audio-format mp3 "$1" -o "/storage/7689-5BBD/%(title)s.%(ext)s"
 }
 
@@ -35,24 +32,19 @@ part()
 
 #program starts from here..
 x=$(termux-clipboard-get)
-printf "\n${c_blue} video link :${c_magenta}"
-printf "$x\n"
+printf "\n${c_blue} video link :${c_magenta}$x\n"
 printf "${c_yellow}Download>>\n${c_blue}[a]Audio only\n${c_magenta}[f]part of Audio only\n${c_green}[v]Full video\n${c_cyan}[p]Part of video\n${c_red}[q]Quit"
 printf "\n${c_reset}Enter choice:${c_green}"
 read choice
 case $choice in
 	a)
-		ext_audio "$x" && termux-notification -c "audio downloaded"
-		;;
+		full "$x" "1" && termux-notification -c "audio downloaded";;
 	f)
-		part "$x" "1" && termux-notification -c "audio downloaded"
-		;;
+		part "$x" "1" && termux-notification -c "audio downloaded";;
 	v)
-		full_video "$x" && termux-notification -c "video downloaded"
-		;;
+		full "$x" && termux-notification -c "video downloaded";;
 	p)
-		part "$x" && termux-notification -c "video downloaded"
-		;;
+		part "$x" && termux-notification -c "video downloaded";;
 	q)
 		break;;
 esac
