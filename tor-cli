@@ -51,15 +51,12 @@ LINE=$(paste -d\   $cachedir/size.bw $cachedir/seedleech.bw $cachedir/titles.bw 
 
 url=$(head -n $LINE $cachedir/links.bw | tail -n +$LINE)
 
-if [ -z "$url" ]; then
-	echo "no torrent selected"
-	exit
-fi
+[ -z "$url" ] && exit 0
 
 echo "${baseurl}${url}"
 
 # Requesting page for magnet link
-magnet=$(curl -s "${baseurl}${url}" | grep -Po "magnet.*\" " | tr -d \")
+magnet=$(curl -s "${baseurl}${url}" | sed -nE 's/.*down_magnet.*href="([^"]*)" .*/\1/p')
 
 termux-clipboard-set "$magnet"
 ./torrent "$magnet"
