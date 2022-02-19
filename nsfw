@@ -2,8 +2,8 @@
 
 [ -z "$*" ] && printf "enter number or link:" && read -r num || num=$*
 num=$(printf "$num" | cut -d\/ -f5)
-mkdir -p $HOME/.cache/$num
 dir="$HOME/.cache/$num"
+mkdir -pv $dir
 trap "rm -rf $dir;exit 0" INT HUP
 pg=$(curl -s "https://nhentai.net/g/$num/1/" | sed -nE 's/.*pages">(.*)<\/span><.*/\1/p')
 echo "pages : $pg"
@@ -18,4 +18,4 @@ echo "waiting 5 sec for pages to download completely"
 sleep 5
 echo "concat pages to pdf"
 convert "$dir/*" "7689-5BBD/sem-6/$num.pdf" && echo "saved pdf in 7689-5BBD/sem-6/$num.pdf\nenjoy 😏😏"
-rm -rf $dir
+rm -rvf $dir

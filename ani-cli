@@ -204,7 +204,7 @@ open_episode () {
 ############
 
 # to clear the colors when exited using SIGINT
-trap "printf '$c_reset';exit 0" INT HUP
+trap "printf '$c_reset';rm -f dl ndl;exit 0" INT HUP
 
 # option parsing
 is_download=0
