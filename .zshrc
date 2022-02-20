@@ -1,5 +1,6 @@
 # Lines configured by zsh-newuser-install
 alias v="nvim"
+alias notirm="termux-notification-remove"
 alias exit="exit 0"
 alias cp="cp -v"
 alias rm="rm -v"

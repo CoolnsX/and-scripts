@@ -1,5 +1,6 @@
 #!/bin/sh
 
+agent="Mozilla/5.0 (Linux; Android 11; moto g(9) power) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.101 Mobile Safari/537.36"
 decrypt_link() {
     ajax_url='https://gogoplay.io/encrypt-ajax.php'
     video_id=$(printf "$1" | sed -nE 's/.*id=(.*)&token.*/\1/p')
@@ -7,16 +8,16 @@ decrypt_link() {
     iv='34323036393133333738303038313335'
     ajax=$(printf "$video_id" | openssl enc -aes256 -K "$secret_key" -iv "$iv" -a)
 
-    curl -s -H 'x-requested-with:XMLHttpRequest' "$ajax_url" -d "id=$ajax" -d "time=69420691337800813569" | jq -r '.source[].file' | head -4 | tail -1
+    curl -s -H "X-Requested-With:XMLHttpRequest" -H "User-Agent:$agent" -H "Referer:https:$1" "$ajax_url" -d "id=$ajax" -d "time=69420691337800813569" | jq -r '.source[].file' | head -4 | tail -1
 }
 
-url=$(curl -s "https://gogoanime.film" | sed -nE 's/.*"name".*href="\/([^"]*)".*/\1/p' | fzf)
+url=$(curl -s -A "$agent" "https://gogoanime.film" | sed -nE 's/.*"name".*href="\/([^"]*)".*/\1/p' | fzf)
 
 [ -z "$url" ] && exit 0
 
-refr=$(curl -s "https://gogoanime.film/$url" | sed -n -E 's/^[[:space:]]*<a href="#" rel="100" data-video="([^"]*)".*/\1/p')
+refr=$(curl -s -A "$agent" "https://gogoanime.film/$url" | sed -n -E 's/^[[:space:]]*<a href="#" rel="100" data-video="([^"]*)".*/\1/p')
 
 video=$(decrypt_link "$refr")
 echo "Downloading episode $url"
 
-aria2c --summary-interval=0 -x 16 -s 16 --referer="https:$refr" "$video" --dir=/storage/7689-5BBD -o "$url.mp4" --download-result=hide && termux-notification -t "Episode Donwloaded" -c "$url"
+aria2c --summary-interval=0 -x 16 -s 16 -U "$agent" --referer="https:$refr" "$video" --dir=/storage/7689-5BBD -o "$url.mp4" --download-result=hide && termux-notification -t "Episode Donwloaded" -c "$url"
