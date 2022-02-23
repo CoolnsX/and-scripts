@@ -6,6 +6,7 @@ y
 x
 dl
 ndl
+.zcompdump
 .cache/   
 .config/  
 .ipython/ 
