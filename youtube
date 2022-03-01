@@ -23,6 +23,7 @@ part(){
 
 #program starts from here..
 x=$(termux-clipboard-get)
+[ "$1" = "v" ] && yt-dlp "$x" -o "/storage/7689-5BBD/%(title)s.%(ext)s" && termux-notification -c "video downloaded" && exit 0
 printf "\n${c_blue} video link :${c_magenta}$x\n"
 printf "${c_yellow}Download>>\n${c_blue}[a]Audio only\n${c_magenta}[f]part of Audio only\n${c_green}[v]Full video\n${c_cyan}[p]Part of video\n${c_red}[q]Quit"
 printf "\n${c_reset}Enter choice:${c_green}"

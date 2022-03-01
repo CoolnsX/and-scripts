@@ -2,26 +2,15 @@
 
 #script for downloading latest anime episode via torrent using torrent rss feeds on "subsplease.org/rss"
 
-#parsing rss file
 echo "please wait.. parsing Subsplease rss..\n"
 curl -s https://subsplease.org/rss/?r=720 | tr "<" "\n" > .cache/rss
-
-#extracting names and providing the menu for selecting particular title
 name=$(sed -n -e 's/title>\[.*Please\] \(.*\)/\1/p' .cache/rss | fzf)
 
 [ -z "$name" ] && exit 0
 echo "Downloading $name" 
 
-#extracting id from anime_name_[id].mkv
 id=$(printf "$name" | sed -n -e 's/.*\[\(.*\)\].*/\1/p')
-
-#for torrent having batch episode instead of id..
-[ "$id" = "Batch" ] && id=$(printf "$name" | sed -e 's/ (.*//g' -e 's/ /\%20/g') 
-
-#finding the magnet link containing the exact pattern
 magnet=$(sed -n -e "s/link>\(.*$id.*\).*/\1/p" .cache/rss | sed 's/amp;//g')
 
 termux-clipboard-set "$magnet"
-
-#custom script for downloading torrent using aria2c.. you can use your own bittorrent client here
 ./torrent "$magnet"

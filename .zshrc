@@ -1,3 +1,7 @@
+aria(){
+	aria2c -s 16 -x 16 --referer="$1" --dir=7689-5BBD "$2"
+}
+
 # Lines configured by zsh-newuser-install
 alias v="nvim"
 alias notirm="termux-notification-remove"

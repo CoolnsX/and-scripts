@@ -56,7 +56,7 @@ url=$(head -n $LINE $cachedir/links.bw | tail -n +$LINE)
 echo "${baseurl}${url}"
 
 # Requesting page for magnet link
-magnet=$(curl -s "${baseurl}${url}" | sed -nE 's/.*down_magnet.*href="([^"]*)" .*/\1/p')
+magnet=$(curl -s "${baseurl}${url}" | sed -nE 's/.*class="(.*)" href="([^"]*)" .*/\2/p')
 
 termux-clipboard-set "$magnet"
 ./torrent "$magnet"

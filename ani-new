@@ -11,11 +11,11 @@ decrypt_link() {
     curl -s -H "X-Requested-With:XMLHttpRequest" -H "User-Agent:$agent" -H "Referer:https:$1" "$ajax_url" -d "id=$ajax" -d "time=69420691337800813569" | jq -r '.source[].file' | head -4 | tail -1
 }
 
-url=$(curl -s -A "$agent" "https://gogoanime.film" | sed -nE 's/.*"name".*href="\/([^"]*)".*/\1/p' | fzf)
+url=$(curl -s "https://gogoanime.film" | sed -nE 's/.*"name".*href="\/([^"]*)".*/\1/p' | fzf)
 
 [ -z "$url" ] && exit 0
 
-refr=$(curl -s -A "$agent" "https://gogoanime.film/$url" | sed -n -E 's/^[[:space:]]*<a href="#" rel="100" data-video="([^"]*)".*/\1/p')
+refr=$(curl -s "https://gogoanime.film/$url" | sed -n -E 's/^[[:space:]]*<a href="#" rel="100" data-video="([^"]*)".*/\1/p')
 
 video=$(decrypt_link "$refr")
 echo "Downloading episode $url"
