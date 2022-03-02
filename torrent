@@ -14,22 +14,18 @@ down(){
 
 trap "rm -f $HOME/.cache/*.torrent;termux-notification-remove 2;exit 0" INT HUP
 [ -z "$*" ] && magnet=$(termux-clipboard-get) || magnet=$*
-
 echo "$magnet"
 printf "${c_yellow}Download>>\n${c_green}[f]ull torrent\n${c_cyan}[p]artial torrent \n${c_red}[q]uit"
 printf "${c_reset}\n\tenter choice:"
 read -r ch
 case $ch in
-    f)
-    	down "$magnet";;
-    p)
-   	aria2c --dir=$HOME/.cache --bt-metadata-only=true --bt-save-metadata=true "$magnet"
+    f)	down "$magnet";;
+    p)	aria2c --dir=$HOME/.cache --bt-metadata-only=true --bt-save-metadata=true "$magnet"
     	tput reset
     	aria2c --show-files=true $HOME/.cache/*.torrent 
     	printf "\nEnter idx(default all):"
     	read -r ind
 	down "$HOME/.cache/*.torrent" "$ind"
     	rm -f $HOME/.cache/*.torrent;;
-    q)
-	exit 0;;
+    q)	exit 0;;
 esac

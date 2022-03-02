@@ -1,6 +1,9 @@
+#user-defined functions
 aria(){
-	aria2c -s 16 -x 16 --referer="$1" --dir=7689-5BBD "$2"
-}
+	aria2c -s 16 -x 16 --referer="$1" --dir=7689-5BBD "$2" }
+
+token(){
+    termux-clipboard-set "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" }
 
 # Lines configured by zsh-newuser-install
 alias v="nvim"

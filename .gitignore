@@ -8,6 +8,8 @@ dl
 ndl
 .zcompdump
 .cache/   
+.npm/
+.npmrc
 .config/  
 .ipython/ 
 .local/   

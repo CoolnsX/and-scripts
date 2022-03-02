@@ -1,7 +1,5 @@
 #!/bin/sh
-
 # script for downloading videos/audios from sites...
-
 # defining shell colors for distinction
 c_red="\033[1;31m"
 c_green="\033[1;32m"
@@ -29,14 +27,9 @@ printf "${c_yellow}Download>>\n${c_blue}[a]Audio only\n${c_magenta}[f]part of Au
 printf "\n${c_reset}Enter choice:${c_green}"
 read choice
 case $choice in
-	a)
-		yt-dlp -f 'ba' -x --audio-format mp3 "$x" -o "/storage/7689-5BBD/%(title)s.%(ext)s" && termux-notification -c "audio downloaded";;
-	f)
-		part "$x" "1" && termux-notification -c "audio downloaded";;
-	v)
-		yt-dlp "$x" -o "/storage/7689-5BBD/%(title)s.%(ext)s" && termux-notification -c "video downloaded";;
-	p)
-		part "$x" && termux-notification -c "video downloaded";;
-	q)
-		break;;
+	a)	yt-dlp -f 'ba' -x --audio-format mp3 "$x" -o "/storage/7689-5BBD/%(title)s.%(ext)s" && termux-notification -c "audio downloaded";;
+	f)	part "$x" "1" && termux-notification -c "audio downloaded";;
+	v)	yt-dlp "$x" -o "/storage/7689-5BBD/%(title)s.%(ext)s" && termux-notification -c "video downloaded";;
+	p)	part "$x" && termux-notification -c "video downloaded";;
+	q)	break;;
 esac
