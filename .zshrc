@@ -5,7 +5,7 @@ aria(){
 gitp(){
     git add .
     git commit -m "$1"
-    termux-clipboard-set "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"
+    termux-clipboard-set "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"
     git push
 }
 # Lines configured by zsh-newuser-install
