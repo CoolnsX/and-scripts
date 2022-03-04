@@ -2,13 +2,10 @@
 aria(){
 	aria2c -s 16 -x 16 --referer="$1" --dir=7689-5BBD "$2" }
 
-token(){
-    termux-clipboard-set "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" }
-
 gitp(){
     git add .
     git commit -m "$1"
-    termux-clipboard-set "ghp_AX1dSxCKhFJZnA91jPUK2bNSQuUeQ2    0UwFKq"
+    termux-clipboard-set "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"
     git push
 }
 # Lines configured by zsh-newuser-install
