@@ -11,15 +11,8 @@ decrypt_link() {
 	printf "$data" | base64 -d | openssl enc -d -aes256 -K "$secret_key" -iv "$iv" | sed -e 's/\].*/\]/' -e 's/\\//g' | grep -Eo 'https:\/\/[-a-zA-Z0-9@:%._\+~#=][a-zA-Z0-9][-a-zA-Z0-9@:%_\+.~#?&\/\/=]*' | head -4 | tail -1
 }
 
-agent="Mozilla/5.0 (Linux; Android 11; moto g(9) power) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.101 Mobile Safari/537.36"
 url=$(curl -s "https://gogoanime.film" | sed -nE 's/.*"name".*href="\/([^"]*)".*/\1/p' | fzf)
 [ -z "$url" ] && exit 0 || echo "Downloading $url"
 refr=$(curl -s "https://gogoanime.film/$url" | sed -n -E 's/.*class="active" rel="1" data-video="([^"]*)".*/\1/p')
 video=$(decrypt_link "$refr")
-case $video in
-    *mp4*)
-	aria2c --summary-interval=0 -x 16 -s 16 -U "$agent" --referer="https:$refr" "$video" --dir=/storage/7689-5BBD -o "$url.mp4" --download-result=hide && termux-notification -t "Episode Downloaded" -c "$url";;
-    *m3u8*)
-	ffmpeg -referer "https:$refr" -i "$video" -c copy "/storage/7689-5BBD/$url.mp4";;
-esac
-
+ffmpeg -loglevel error -stats -referer "https:$refr" -i "$video" -c copy "/storage/7689-5BBD/$url.mp4" && termux-notification -t "Episode Downloaded" -c "$url"
