@@ -1,18 +1,25 @@
 #!/bin/sh
 
 decrypt_link() {
-    ajax_url='https://gogoplay.io/encrypt-ajax.php'
-    video_id=$(printf "$1" | sed -nE 's/.*id=(.*)&token.*/\1/p')
-    secret_key='3235373436353338353932393338333936373634363632383739383333323838'
-    iv='34323036393133333738303038313335'
-    ajax=$(printf "$video_id" | openssl enc -aes256 -K "$secret_key" -iv "$iv" -a)
-
-    curl -s -H "X-Requested-With:XMLHttpRequest" -H "User-Agent:$agent" -H "Referer:https:$1" "$ajax_url" -d "id=$ajax" -d "time=69420691337800813569" | jq -r '.source[].file' | head -4 | tail -1
+	secret_key='3235373136353338353232393338333936313634363632323738383333323838'
+	iv='31323835363732393835323338333933'
+	ajax_url="https://gogoplay4.com/encrypt-ajax.php"
+	crypto_data=$(curl -s "https:$1" | sed -nE 's/.*data-value="([^"]*)".*/\1/p')
+	id=$(printf "$crypto_data" | base64 -d | openssl enc -d -aes256 -K "$secret_key" -iv "$iv" | cut -d '&' -f1)
+	ajax=$(printf "%s\010\016\003\010\t\003\004\t" "$id" | openssl enc -aes256 -K "$secret_key" -iv "$iv" -a)
+	data=$(curl -s -H "X-Requested-With:XMLHttpRequest" "$ajax_url" -d "id=$ajax" | cut -d\" -f4 | tr -d '\\')
+	printf "$data" | base64 -d | openssl enc -d -aes256 -K "$secret_key" -iv "$iv" | sed -e 's/\].*/\]/' -e 's/\\//g' | grep -Eo 'https:\/\/[-a-zA-Z0-9@:%._\+~#=][a-zA-Z0-9][-a-zA-Z0-9@:%_\+.~#?&\/\/=]*' | head -4 | tail -1
 }
 
 agent="Mozilla/5.0 (Linux; Android 11; moto g(9) power) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.101 Mobile Safari/537.36"
 url=$(curl -s "https://gogoanime.film" | sed -nE 's/.*"name".*href="\/([^"]*)".*/\1/p' | fzf)
 [ -z "$url" ] && exit 0 || echo "Downloading $url"
-refr=$(curl -s "https://gogoanime.film/$url" | sed -n -E 's/^[[:space:]]*<a href="#" rel="100" data-video="([^"]*)".*/\1/p')
+refr=$(curl -s "https://gogoanime.film/$url" | sed -n -E 's/.*class="active" rel="1" data-video="([^"]*)".*/\1/p')
 video=$(decrypt_link "$refr")
-aria2c --summary-interval=0 -x 16 -s 16 -U "$agent" --referer="https:$refr" "$video" --dir=/storage/7689-5BBD -o "$url.mp4" --download-result=hide && termux-notification -t "Episode Donwloaded" -c "$url"
+case $video in
+    *mp4*)
+	aria2c --summary-interval=0 -x 16 -s 16 -U "$agent" --referer="https:$refr" "$video" --dir=/storage/7689-5BBD -o "$url.mp4" --download-result=hide && termux-notification -t "Episode Downloaded" -c "$url";;
+    *m3u8*)
+	ffmpeg -referer "https:$refr" -i "$video" -c copy "/storage/7689-5BBD/$url.mp4";;
+esac
+

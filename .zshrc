@@ -5,6 +5,12 @@ aria(){
 token(){
     termux-clipboard-set "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" }
 
+gitp(){
+    git add .
+    git commit -m "$1"
+    termux-clipboard-set "ghp_AX1dSxCKhFJZnA91jPUK2bNSQuUeQ2    0UwFKq"
+    git push
+}
 # Lines configured by zsh-newuser-install
 alias v="nvim"
 alias notirm="termux-notification-remove"

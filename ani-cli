@@ -51,17 +51,18 @@ embade_link() {
 	ep_no=$2
 
 	curl -s "https://$site/$anime_id-episode-$ep_no" |
-	sed -n -E 's/^[[:space:]]*<a href="#" rel="100" data-video="([^"]*)".*/\1/p' | sed 's/^/https:/g'
+	sed -n -E 's/.*class="active" rel="1" data-video="([^"]*)".*/\1/p' | sed 's/^/https:/g'
 }
 
 decrypt_link() {
-    ajax_url='https://gogoplay.io/encrypt-ajax.php'
-    video_id=$(printf "$1" | sed -nE 's/.*id=(.*)&token.*/\1/p')
-    secret_key='3235373436353338353932393338333936373634363632383739383333323838'
-    iv='34323036393133333738303038313335'
-    ajax=$(printf "$video_id" | openssl enc -aes256 -K "$secret_key" -iv "$iv" -a)
-
-    curl -s -H "X-Requested-With:XMLHttpRequest" -H "User-Agent:$agent" -H "Referer:$1" "$ajax_url" -d "id=$ajax" -d "time=69420691337800813569" | jq -r '.source[].file' | head -4 | tail -1
+	secret_key='3235373136353338353232393338333936313634363632323738383333323838'
+	iv='31323835363732393835323338333933'
+	ajax_url="https://gogoplay4.com/encrypt-ajax.php"
+	crypto_data=$(curl -s "$1" | sed -nE 's/.*data-value="([^"]*)".*/\1/p')
+	id=$(printf "$crypto_data" | base64 -d | openssl enc -d -aes256 -K "$secret_key" -iv "$iv" | cut -d '&' -f1)
+	ajax=$(printf "%s\010\016\003\010\t\003\004\t" | openssl enc -aes256 -K "$secret_key" -iv "$iv" -a)
+	data=$(curl -s -H "X-Requested-With:XMLHttpRequest" "$ajax_url" -d "id=$ajax" | cut -d\" -f4 | tr -d '\\')
+	printf '%s' "$data" | base64 -d | openssl enc -d -aes256 -K "$secret_key" -iv "$iv" | sed -e 's/\].*/\]/' -e 's/\\//g' | grep -Eo 'https:\/\/[-a-zA-Z0-9@:%._\+~#=][a-zA-Z0-9][-a-zA-Z0-9@:%_\+.~#?&\/\/=]*' | head -4 | tail -1
 }
 
 # get query
