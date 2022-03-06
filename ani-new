@@ -4,10 +4,9 @@ decrypt_link() {
 	secret_key='3235373136353338353232393338333936313634363632323738383333323838'
 	iv='31323835363732393835323338333933'
 	ajax_url="https://gogoplay4.com/encrypt-ajax.php"
-	crypto_data=$(curl -s "https:$1" | sed -nE 's/.*data-value="([^"]*)".*/\1/p')
-	id=$(printf "$crypto_data" | base64 -d | openssl enc -d -aes256 -K "$secret_key" -iv "$iv" | cut -d '&' -f1)
+	id=$(curl -s "https:$1" | sed -nE 's/.*data-value="([^"]*)".*/\1/p' | base64 -d | openssl enc -d -aes256 -K "$secret_key" -iv "$iv" | cut -d\& -f1)
 	ajax=$(printf "%s\010\016\003\010\t\003\004\t" "$id" | openssl enc -aes256 -K "$secret_key" -iv "$iv" -a)
-	data=$(curl -s -H "X-Requested-With:XMLHttpRequest" "$ajax_url" -d "id=$ajax" | cut -d\" -f4 | tr -d '\\')
+	data=$(curl -s -H "X-Requested-With:XMLHttpRequest" "$ajax_url" -d "id=$ajax" | sed -e 's/{"data":"//' -e 's/"}/\n/' -e 's/\\//g')
 	printf "$data" | base64 -d | openssl enc -d -aes256 -K "$secret_key" -iv "$iv" | sed -e 's/\].*/\]/' -e 's/\\//g' | grep -Eo 'https:\/\/[-a-zA-Z0-9@:%._\+~#=][a-zA-Z0-9][-a-zA-Z0-9@:%_\+.~#?&\/\/=]*' | head -4 | tail -1
 }
 
@@ -15,4 +14,9 @@ url=$(curl -s "https://gogoanime.film" | sed -nE 's/.*"name".*href="\/([^"]*)".*
 [ -z "$url" ] && exit 0 || echo "Downloading $url"
 refr=$(curl -s "https://gogoanime.film/$url" | sed -n -E 's/.*class="active" rel="1" data-video="([^"]*)".*/\1/p')
 video=$(decrypt_link "$refr")
-ffmpeg -loglevel error -stats -referer "https:$refr" -i "$video" -c copy "/storage/7689-5BBD/$url.mp4" && termux-notification -t "Episode Downloaded" -c "$url"
+case $video in
+    *mp4*)
+	    aria2c --summary-interval=0 -x 16 -s 16 --referer="https:$refr" "$video" --dir=/storage/7689-5BBD -o "$url.mp4" --download-result=hide && termux-notification -t "Episode Downloaded" -c "$url";;
+    *m3u*)
+	    ffmpeg -loglevel error -stats -referer "https:$refr" -i "$video" -c copy "/storage/7689-5BBD/$url.mp4" && termux-notification -t "Episode Downloaded" -c "$url";;
+esac
