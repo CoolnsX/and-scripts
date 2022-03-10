@@ -9,6 +9,7 @@ ndl
 .zcompdump
 .cache/   
 dra-cla/
+lol/
 .npm/
 .npmrc
 .config/  
