@@ -1,6 +1,5 @@
 #!/bin/sh
 
-prog="ani-cli"
 site="https://gogoplay4.com"
 
 c_red="\033[1;31m"
@@ -19,9 +18,9 @@ status(){
 down(){
 case $2 in
     *mp4*)
-	   aria2c --summary-interval=0 -x 16 -s 16 --referer="$1" "$2" --dir=/storage/7689-5BBD -o "${3}-${4}.mp4" --download-result=hide;;
+	   aria2c --summary-interval=0 -x 16 -s 16 --referer="$1" "$2" --dir=/storage/7689-5BBD -o "${3}${4}.mp4" --download-result=hide;;
     *m3u*)
-	   ffmpeg -loglevel error -stats -referer "$1" -i "$2" -c copy "/storage/7689-5BBD/${3}-${4}.mp4";;
+	   ffmpeg -loglevel error -stats -referer "$1" -i "$2" -c copy "/storage/7689-5BBD/${3}${4}.mp4";;
 esac
 }
 
@@ -35,30 +34,30 @@ err () {
 }
 
 search_anime () {
-	# get anime name along with its id
-	search=$1
-	curl -s "$site/search.html?keyword=$search" | sed -nE 's_^[[:space:]]*<a href="/videos/([^"]*)">_\1_p'
+	curl -s "$site/search.html?keyword=$1" | sed -nE 's_^[[:space:]]*<a href="/videos/([^"]*)">_\1_p'
 }
 
 embade_link() {
-	# get the download page url
-	anime_id=$1
-	ep_no=$2
-
-	curl -s "$site/videos/$anime_id-episode-$ep_no" | sed -nE 's_^[[:space:]]*<iframe src="([^"]*)".*_\1_p' | sed 's/^/https:/g'
+	curl -s "$site/videos/${1}${2}" | sed -nE 's_^[[:space:]]*<iframe src="([^"]*)".*_\1_p' | sed 's/^/https:/g'
 }
 
 decrypt_link() {
 	secret_key='3235373136353338353232393338333936313634363632323738383333323838'
 	iv='31323835363732393835323338333933'
-	ajax_url="https://gogoplay4.com/encrypt-ajax.php"
-	id=$(curl -s "$1" | sed -nE 's/.*data-value="([^"]*)".*/\1/p' | base64 -d | openssl enc -d -aes256 -K "$secret_key" -iv "$iv" | cut -d\& -f1)
-	ajax=$(printf "%s\010\016\003\010\t\003\004\t" "$id" | openssl enc -aes256 -K "$secret_key" -iv "$iv" -a)
+	ajax_url="$site/encrypt-ajax.php"
+	id=$(printf "%s" "$1" | sed -nE 's/.*id=(.*)&title.*/\1/p')
+	if [ "${#id}" -lt "8" ]; then
+                pad=$(printf "\010\016\003\010\t\003\004\t" | cut -c"$((8-(${#id} % 16)))"-)
+                new_id=$(printf "%s$pad" "$id")
+        else
+		x=$(printf "\\$(printf %o $(($(printf %d "'$(printf %s "$id" | tail -c 1)") ^ 10 )))")
+                new_id=$(printf "%s" "$id" | sed "s/.$/$x/")
+        fi
+	ajax=$(printf "%s\010\016\003\010\t\003\004\t" "$new_id" | openssl enc -aes256 -K "$secret_key" -iv "$iv" -a)
 	data=$(curl -s -H "X-Requested-With:XMLHttpRequest" "$ajax_url" -d "id=$ajax" | cut -d\" -f4 | tr -d '\\')
 	printf '%s' "$data" | base64 -d | openssl enc -d -aes256 -K "$secret_key" -iv "$iv" | sed -e 's/\].*/\]/' -e 's/\\//g' | grep -Eo 'https:\/\/[-a-zA-Z0-9@:%._\+~#=][a-zA-Z0-9][-a-zA-Z0-9@:%_\+.~#?&\/\/=]*' | head -4 | tail -1
 }
 
-# get query
 get_search_query () {
 	if [ -z "$*" ]; then
 		printf "Search Anime: "
@@ -68,7 +67,6 @@ get_search_query () {
 	fi
 	query=$(printf "$query" | tr ' ' '-')
 }
-
 
 #####################
 ## Anime selection ##
@@ -82,7 +80,6 @@ anime_selection () {
 
 	count=1
 	while read anime_id; do
-		# alternating colors for menu
 		[ $((count % 2)) -eq 0 ] &&
 			menu_format_string=$menu_format_string_c1 ||
 			menu_format_string=$menu_format_string_c2
@@ -93,15 +90,11 @@ anime_selection () {
 	$search_results
 	EOF
 
-	# User input
-	printf "$c_blue%s$c_green" "Enter number: "
+	printf "$c_blue%s$c_green" "Enter number:"
 	read choice
 	printf "$c_reset"
-
-	# Check if input is a number
 	[ "$choice" -eq "$choice" ] 2>/dev/null || die "Invalid number entered"
 
-	# Select respective anime_id
 	count=1
 	while read anime_id; do
 		if [ $count -eq $choice ]; then
@@ -116,9 +109,9 @@ anime_selection () {
 	[ -z "$selection_id" ] && die "Invalid number entered"
 
 	read last_ep_number <<-EOF
-	$(printf "%s" "$selection_id" | sed 's/.*episode-//')
+	$(printf "%s" "$selection_id" | grep -Po '\K\d+' | tail -1)
 	EOF
-	selection_id=$(printf "%s" "$selection_id" | sed 's/-episode.*//')
+	selection_id=$(printf "%s" "$selection_id" | sed 's/[0-9]*.$//')
 }
 
 ##################
@@ -126,19 +119,20 @@ anime_selection () {
 ##################
 
 episode_selection () {
-		printf "Range of episodes can be specified: start_number end_number\n"
-
-	printf "${c_blue}Choose episode $c_cyan[1-%d]$c_reset:$c_green " $last_ep_number
+	first_ep_number=0
+        result=$(embade_link "$selection_id" "$first_ep_number")
+        [ -z "$result" ] && first_ep_number=1
+    	printf "Range of episodes can be specified: start_number end_number\n"
+	printf "${c_blue}Choose episode $c_cyan[%d-%d]$c_reset:$c_green " "$first_ep_number" "$last_ep_number"
 	read ep_choice_start ep_choice_end
 	printf "$c_reset"
-
 }
 
 open_episode () {
 	anime_id=$1
 	episode=$2
 
-	if [ $episode -lt 1 ] || [ $episode -gt $last_ep_number ]; then
+	if [ $episode -lt $first_ep_number ] || [ $episode -gt $last_ep_number ]; then
 		err "Episode out of range"
 		printf "${c_blue}Choose episode $c_cyan[1-%d]$c_reset:$c_green " $last_ep_number
 		read episode
@@ -146,13 +140,11 @@ open_episode () {
 	fi
 
 	printf "\nGetting data for episode %d\n" $episode
-
 	embedded_url=$(embade_link "$anime_id" "$episode")
 	echo "$embedded_url"
 	video_url=$(decrypt_link "$embedded_url")
 	echo "$video_url"
 	printf "\n${c_blue}Downloading episode: $episode ...\n${c_reset}"
-	# add 0 padding to the episode name
 	episode=$(printf "%03d" $episode)
 	{
 	    termux-notification --ongoing -i 0 -t "$anime_id" -c "Downloading episode $episode ..."
@@ -167,7 +159,7 @@ open_episode () {
 # Start Up #
 ############
 
-trap "printf '$c_reset';rm -f dl ndl;exit 0" INT HUP
+trap "printf '$c_reset';termux-notification-remove 0;rm -f dl ndl;exit 0" INT HUP
 
 ########
 # main #
@@ -179,13 +171,12 @@ search_results=$(search_anime "$query")
 anime_selection "$search_results"
 episode_selection
 
-{ # checking input
+{
 	[ "$ep_choice_start" -eq "$ep_choice_start" ] 2>/dev/null || die "Invalid number entered"
 	episodes=$ep_choice_start
 
 	if [ -n "$ep_choice_end" ]; then
 		[ "$ep_choice_end" -eq "$ep_choice_end" ] 2>/dev/null || die "Invalid number entered"
-		# create list of episodes to download/watch
 		episodes=$(seq $ep_choice_start $ep_choice_end)
 	fi
 }
@@ -209,19 +200,16 @@ while :; do
 	case $choice in
 		n)
 			episode=$((episode + 1))
-			open_episode "$selection_id" "$episode"
-			;;
+			open_episode "$selection_id" "$episode";;
 		p)
 			episode=$((episode - 1))
-			open_episode "$selection_id" "$episode"
-			;;
+			open_episode "$selection_id" "$episode";;
 
 		s)	printf "${c_blue}Choose episode $c_cyan[1-%d]$c_reset:$c_green " $last_ep_number
 			read episode
 			printf "$c_reset"
 			[ "$episode" -eq "$episode" ] 2>/dev/null || die "Invalid number entered"
-			open_episode "$selection_id" "$episode"
-			;;
+			open_episode "$selection_id" "$episode";;
 
 		r)	
 			cnt=$(cat ndl | wc -l)
@@ -231,18 +219,14 @@ while :; do
 				line=$(printf "%d" $line)
 				sed -i '1d' ndl
 				open_episode "$selection_id" "$line"
-			done
-			;;
+			done;;
 
 		q)
 			rm -f dl ndl
-			break
-			;;
+			break;;
 
 		*)
 			rm -f dl ndl
-			die "invalid choice"
-			;;
+			die "invalid choice";;
 	esac
-
 done
