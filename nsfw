@@ -10,13 +10,9 @@ echo "pages : $pg"
 for i in $(seq $pg);do
 	url=$(curl -s "https://nhentai.net/g/$num/$i/" | sed -nE 's/.*<img src="([^"]*)".*/\1/p')
 	i_t=$(printf "%03d" $i)
-	echo "downloading page $i"
-	setsid -f curl -s "$url" -o "$dir/$i_t"
-	sleep 2
+	curl -s "$url" -o "$dir/$i_t" && echo " page $i ✓" || echo "page $1 ❌" &
 done
-
-echo "waiting 5 sec for pages to download completely"
-sleep 5
+wait
 echo "concatenating pages to pdf"
-convert "$dir/*" "/storage/7689-5BBD/$num.pdf" && printf "saved pdf as $num.pdf\nopening pdf...enjoy 😏😏" 
+convert "$dir/*" "/storage/7689-5BBD/$num.pdf" && printf "saved pdf as $num.pdf...enjoy 😏😏" 
 rm -rf $dir

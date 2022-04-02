@@ -9,7 +9,8 @@ ndl
 .zcompdump
 .cache/   
 dra-cla/
-lol/
+*-cli
+lol*/
 .npm/
 .npmrc
 .config/  
@@ -24,3 +25,4 @@ token
 .termux_authinfo
 .shortcuts
 7689-5BBD
+temp*

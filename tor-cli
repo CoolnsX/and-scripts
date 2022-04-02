@@ -2,7 +2,7 @@
 
 mkdir -p $HOME/.cache/pirokit
 
-if [ -z $* ]; then
+if [ -z "$*" ]; then
   printf "Search Torrent: "
   read -r query
 else
@@ -11,7 +11,7 @@ fi
 
 baseurl="https://www.1337xx.to"
 cachedir="$HOME/.cache/pirokit"
-query="$(sed 's/ /+/g' <<<$query)"
+query="$(sed 's/ /%20/g' <<<$query)"
 
 curl -s -G $baseurl/search/$query/1/ > $cachedir/tmp.html
 

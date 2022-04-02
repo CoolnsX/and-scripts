@@ -1,16 +1,15 @@
 #!/bin/sh
-
 #script for downloading latest anime episode via torrent using torrent rss feeds on "subsplease.org/rss"
 
 echo "please wait.. parsing Subsplease rss..\n"
-curl -s https://subsplease.org/rss/?r=720 | tr "<" "\n" > .cache/rss
-name=$(sed -n -e 's/title>\[.*Please\] \(.*\)/\1/p' .cache/rss | fzf)
+data=$(curl -s "https://subsplease.org/rss/?r=sd" | tr "<|>" "\n")
+name=$(printf "%s" "$data" | sed -nE 's/^\[.*Please\] (.*)/\1/p' | fzf)
 
 [ -z "$name" ] && exit 0
 echo "Downloading $name" 
 
 id=$(printf "$name" | sed -n -e 's/.*\[\(.*\)\].*/\1/p')
-magnet=$(sed -n -e "s/link>\(.*$id.*\).*/\1/p" .cache/rss | sed 's/amp;//g')
+magnet=$(printf "%s" "$data" | grep "$id%" | sed 's/amp;//g')
 
 termux-clipboard-set "$magnet"
 ./torrent "$magnet"

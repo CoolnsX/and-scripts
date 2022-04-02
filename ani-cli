@@ -1,6 +1,6 @@
 #!/bin/sh
 
-site="https://gogoplay4.com"
+site="https://gogoplay5.com"
 
 c_red="\033[1;31m"
 c_green="\033[1;32m"
@@ -42,18 +42,11 @@ embade_link() {
 }
 
 decrypt_link() {
-	secret_key='3235373136353338353232393338333936313634363632323738383333323838'
-	iv='31323835363732393835323338333933'
+	secret_key='3633393736383832383733353539383139363339393838303830383230393037'
+	iv='34373730343738393639343138323637'
 	ajax_url="$site/encrypt-ajax.php"
 	id=$(printf "%s" "$1" | sed -nE 's/.*id=(.*)&title.*/\1/p')
-	if [ "${#id}" -lt "8" ]; then
-                pad=$(printf "\010\016\003\010\t\003\004\t" | cut -c"$((8-(${#id} % 16)))"-)
-                new_id=$(printf "%s$pad" "$id")
-        else
-		x=$(printf "\\$(printf %o $(($(printf %d "'$(printf %s "$id" | tail -c 1)") ^ 10 )))")
-                new_id=$(printf "%s" "$id" | sed "s/.$/$x/")
-        fi
-	ajax=$(printf "%s\010\016\003\010\t\003\004\t" "$new_id" | openssl enc -aes256 -K "$secret_key" -iv "$iv" -a)
+	ajax=$(printf "%s" "$id" | openssl enc -e -aes256 -K "$secret_key" -iv "$iv" | base64)
 	data=$(curl -s -H "X-Requested-With:XMLHttpRequest" "$ajax_url" -d "id=$ajax" | cut -d\" -f4 | tr -d '\\')
 	printf '%s' "$data" | base64 -d | openssl enc -d -aes256 -K "$secret_key" -iv "$iv" | sed -e 's/\].*/\]/' -e 's/\\//g' | grep -Eo 'https:\/\/[-a-zA-Z0-9@:%._\+~#=][a-zA-Z0-9][-a-zA-Z0-9@:%_\+.~#?&\/\/=]*' | head -4 | tail -1
 }
