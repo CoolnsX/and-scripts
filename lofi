@@ -1,0 +1,7 @@
+#!/bin/sh
+
+echo "please wait.. generating link"
+url=$(yt-dlp -f b --get-url "$(termux-clipboard-get)")
+echo "$url\n\n\topening in mpv-android"
+mpv "$url"
+exit 0

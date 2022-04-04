@@ -6,13 +6,13 @@ dir="$HOME/.cache/$num"
 mkdir -p $dir
 trap "rm -rf $dir;exit 0" INT HUP
 pg=$(curl -s "https://nhentai.net/g/$num/1/" | sed -nE 's/.*pages">(.*)<\/span><.*/\1/p')
-echo "pages : $pg"
+echo "pages : $pg\ndownloading pages>>"
 for i in $(seq $pg);do
 	url=$(curl -s "https://nhentai.net/g/$num/$i/" | sed -nE 's/.*<img src="([^"]*)".*/\1/p')
 	i_t=$(printf "%03d" $i)
-	curl -s "$url" -o "$dir/$i_t" && echo " page $i ✓" || echo "page $1 ❌" &
+	curl -s "$url" -o "$dir/$i_t" && printf " $i ✓," || printf " $i ❌," &
 done
 wait
-echo "concatenating pages to pdf"
+echo "\nconcatenating pages to pdf"
 convert "$dir/*" "/storage/7689-5BBD/$num.pdf" && printf "saved pdf as $num.pdf...enjoy 😏😏" 
 rm -rf $dir
