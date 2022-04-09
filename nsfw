@@ -6,6 +6,7 @@ dir="$HOME/.cache/$num"
 mkdir -p $dir
 trap "rm -rf $dir;exit 0" INT HUP
 pg=$(curl -s "https://nhentai.net/g/$num/1/" | sed -nE 's/.*pages">(.*)<\/span><.*/\1/p')
+[ -z "$pg" ] && echo "\033[1;31mDoujin doesn't exist!!\033[0m" && exit 0
 echo "\033[1;34m pages : $pg\n\033[1;33mdownloading pages>>"
 for i in $(seq $pg);do
 	url=$(curl -s "https://nhentai.net/g/$num/$i/" | sed -nE 's/.*<img src="([^"]*)".*/\1/p')

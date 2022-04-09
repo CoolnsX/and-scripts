@@ -1,22 +1,24 @@
 #!/bin/sh
 
+base_url=https://goload.pro
+
 decrypt_link() {
 	secret_key='3633393736383832383733353539383139363339393838303830383230393037'
 	iv='34373730343738393639343138323637'
-	ajax_url="https://gogoplay5.com/encrypt-ajax.php"
-	ajax=$(curl -s "https://gogoplay5.com/videos/$1" | sed -nE 's/.*iframe src=".*id=(.*)&title.*".*/\1/p' | openssl enc -e -aes256 -K "$secret_key" -iv "$iv" | base64)
+	ajax_url="$base_url/encrypt-ajax.php"
+	ajax=$(curl -s "$base_url/videos/$1" | sed -nE 's/.*iframe src=".*id=(.*)&title.*".*/\1/p' | openssl enc -e -aes256 -K "$secret_key" -iv "$iv" | base64)
 	data=$(curl -s -H "X-Requested-With:XMLHttpRequest" "$ajax_url" -d "id=$ajax" | sed -e 's/{"data":"//' -e 's/"}/\n/' -e 's/\\//g')
 	printf "$data" | base64 -d | openssl enc -d -aes256 -K "$secret_key" -iv "$iv" | sed -e 's/\].*/\]/' -e 's/\\//g' | grep -Eo 'https:\/\/[-a-zA-Z0-9@:%._\+~#=][a-zA-Z0-9][-a-zA-Z0-9@:%_\+.~#?&\/\/=]*' | head -4 | tail -1
 }
 
 trap "exit 0" INT HUP
-url=$(curl -s "https://gogoplay5.com" | sed -nE 's_.*<a href="/videos/([^"]*)">_\1_p' | fzf)
+url=$(curl -s "$base_url" | sed -nE 's_.*<a href="/videos/([^"]*)">_\1_p' | fzf)
 [ -z "$url" ] && exit 0 || echo "Downloading $url"
 video=$(decrypt_link "$url")
 printf "%s\n" "$video"
 case $video in
     *mp4*)
-	    aria2c --summary-interval=0 -x 16 -s 16 --referer="https://gogoplay5.com" "$video" --dir=/storage/7689-5BBD -o "$url.mp4" --download-result=hide && termux-notification -t "Episode Downloaded" -c "$url" || exit 0;;
+	    aria2c --summary-interval=0 -x 16 -s 16 --referer="$base_url" "$video" --dir=/storage/7689-5BBD -o "$url.mp4" --download-result=hide && termux-notification -t "Episode Downloaded" -c "$url" || exit 0;;
     *m3u*)
-	    ffmpeg -loglevel error -stats -referer "https://gogoplay5.com" -i "$video" -c copy "/storage/7689-5BBD/$url.mp4" && termux-notification -t "Episode Downloaded" -c "$url" || exit 0;;
+	    ffmpeg -loglevel error -stats -referer "$base_url" -i "$video" -c copy "/storage/7689-5BBD/$url.mp4" && termux-notification -t "Episode Downloaded" -c "$url" || exit 0;;
 esac

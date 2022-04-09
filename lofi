@@ -1,7 +1,11 @@
 #!/bin/sh
 
-echo "please wait.. generating link"
-url=$(yt-dlp -f b --get-url "$(termux-clipboard-get)")
-echo "$url\n\n\topening in mpv-android"
-mpv "$url"
+link=$(termux-clipboard-get)
+case $link in
+    *youtu*)
+	    echo "please wait.. generating link & opening link"
+	    mpv "$(yt-dlp -f b --get-url "$link")";;
+    *)
+	    echo "no youtube link found";;
+esac
 exit 0
