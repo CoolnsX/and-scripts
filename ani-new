@@ -3,8 +3,8 @@
 base_url=https://goload.pro
 
 decrypt_link() {
-	secret_key='3633393736383832383733353539383139363339393838303830383230393037'
-	iv='34373730343738393639343138323637'
+	secret_key='3633393736383832383733353336383139363339393232303833323735393037'
+	iv='34373836343433393639343138323637'
 	ajax_url="$base_url/encrypt-ajax.php"
 	ajax=$(curl -s "$base_url/videos/$1" | sed -nE 's/.*iframe src=".*id=(.*)&title.*".*/\1/p' | openssl enc -e -aes256 -K "$secret_key" -iv "$iv" | base64)
 	data=$(curl -s -H "X-Requested-With:XMLHttpRequest" "$ajax_url" -d "id=$ajax" | sed -e 's/{"data":"//' -e 's/"}/\n/' -e 's/\\//g')
@@ -20,5 +20,5 @@ case $video in
     *mp4*)
 	    aria2c --summary-interval=0 -x 16 -s 16 --referer="$base_url" "$video" --dir=/storage/7689-5BBD -o "$url.mp4" --download-result=hide && termux-notification -t "Episode Downloaded" -c "$url" || exit 0;;
     *m3u*)
-	    ffmpeg -loglevel error -stats -referer "$base_url" -i "$video" -c copy "/storage/7689-5BBD/$url.mp4" && termux-notification -t "Episode Downloaded" -c "$url" || exit 0;;
+	    ffmpeg -loglevel error -stats -referer "$base_url" -i "$video" -map "p:4?" -c copy "/storage/7689-5BBD/$url.mp4" && termux-notification -t "Episode Downloaded" -c "$url" || exit 0;;
 esac
