@@ -1,0 +1,12 @@
+#!/bin/sh
+#this script uses the piratesbay api to search for torrents
+
+[ -z "$*" ] && printf "Search torrent:" && read -r query || query=$*
+query=$(printf "%s" "$query" | tr " " "+")
+data=$(curl -s "https://apibay.org/q.php?q=$query&cat=0" | tr "{|}" "\n" | sed -nE 's/.*"name":"(.*)",.*"info_hash":"(.*)",.*,"seeders":"(.*)",.*num.*/\2 <S:\3> \1/p')
+name=$(printf "%s" "$data" | cut -d" " -f2- | fzf)
+[ -z "$name" ] && exit 0
+echo "Downloading $(printf "%s" "$name" | cut -d" " -f2-)" 
+magnet="magnet:?xt=urn:btih:$(printf "%s" "$data" | sed -n "s/ $name//p")"
+termux-clipboard-set "$magnet"
+./torrent "$magnet"

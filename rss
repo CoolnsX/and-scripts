@@ -2,7 +2,7 @@
 #script for downloading latest anime episode via torrent using torrent rss feeds on "subsplease.org/rss"
 
 echo "please wait.. parsing Subsplease rss..\n"
-data=$(curl -s "https://subsplease.org/rss/?r=sd" | tr "<|>" "\n")
+data=$(curl -s "https://subsplease.org/rss/?r=720" | tr "<|>" "\n")
 name=$(printf "%s" "$data" | sed -nE 's/^\[.*Please\] (.*)/\1/p' | fzf)
 
 [ -z "$name" ] && exit 0
