@@ -1,12 +1,24 @@
 #!/bin/sh
 #this script uses the piratesbay api to search for torrents
 
+cal_size() {
+    printf "%.03f\n" "$(($1/1000))e-6"
+}
+
+display() {
+    for i in $(seq $(printf "%s\nlol" "$2" | wc -l));do
+	printf "[%s GB;S:%s\n" "$(cal_size "$(printf "%s" "$1" | sed -n "${i}p")")" "$(printf "%s" "$2" | sed -n "${i}p")" & done
+    wait
+}
+
 [ -z "$*" ] && printf "Search torrent:" && read -r query || query=$*
 query=$(printf "%s" "$query" | tr " " "+")
-data=$(curl -s "https://apibay.org/q.php?q=$query&cat=0" | tr "{|}" "\n" | sed -nE 's/.*"name":"(.*)",.*"info_hash":"(.*)",.*,"seeders":"(.*)",.*num.*/\2 <S:\3> \1/p')
-name=$(printf "%s" "$data" | cut -d" " -f2- | fzf)
-[ -z "$name" ] && exit 0
-echo "Downloading $(printf "%s" "$name" | cut -d" " -f2-)" 
-magnet="magnet:?xt=urn:btih:$(printf "%s" "$data" | sed -n "s/ $name//p")"
+data=$(curl -s "https://apibay.org/q.php?q=$query&cat=0" | sed 's/},/}\n/g' | tr -d "[|]")
+size=$(printf "%s" "$data" | sed -nE 's/.*name.*size":"(.*)",.*user.*/\1/p')
+name_seed=$(printf "%s" "$data" | sed -nE 's/.*name":"(.*)","info_hash.*seeders":"(.*)",.*num.*/\2] \1/p')
+sel=$(display "$size" "$name_seed" | fzf --prompt="select torrent >" | cut -d" " -f3-)
+[ -z "$sel" ] && exit 0
+echo "Downloading $sel" 
+magnet="magnet:?xt=urn:btih:$(printf "%s" "$data" | sed -nE 's/.*name":"(.*)","info_hash":"(.*)",.*leech.*/\2\t\1/p' | sed -n "s/\t$sel//p")"
 termux-clipboard-set "$magnet"
 ./torrent "$magnet"
