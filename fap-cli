@@ -45,11 +45,11 @@ get_query () {
 }
 
 input() {
-	printf "$c_yellow  Episode??(1-%s):$c_reset " "$1"
+    printf "$c_yellow  Episode??(1-%s)|(q):$c_reset " "$1"
 	read -r x
-	while [ -z "$x" ] || [ "$x" -lt "1" ] || [ "$x" -gt "$1" ];do 
+	while [ -z "$x" ] || [ "$x" -lt "1" ] 2>/dev/null || [ "$x" -gt "$1" ] 2>/dev/null ;do 
 	    err "Invalid choice"
-	    printf "$c_yellow  Episode??(1-%s):$c_reset " "$1"
+	    printf "$c_yellow  Episode??(1-%s)|(q):$c_reset " "$1"
 	    read -r x
 	done
 	ep_no=$x
@@ -84,27 +84,27 @@ get_show() {
 	[ -z "$result" ] && die "No hentai selected"
 	printf "${c_blue}Fetching episode list"
 	ep_list=$(curl -s "$base_url/tvshows/$result/" | sed -nE 's_^[[:space:]]*<a href="https://hentaimama.io/(.*)/">.$_\1_p' | tac)
-	noofeps=$(printf "%s\n" "$ep_list" | wc -w)
+	noofeps=$(printf "%s\n" "$ep_list" | wc -l)
 	printf "\33[2K\r${c_green}Episodes list fetched\n"
 	input "$noofeps"
 	get_ep_link
 }
 
 get_ep_link(){
+	[ "$ep_no" = "q" ] && exit 0
 	tput clear
 	printf "${c_blue}Loading Episode"
 	ep_id=$(printf "%s" "$ep_list" | sed -n "${ep_no}p")
 	id=$(curl -s "$base_url/$ep_id/" | sed -nE "s/.*?p=(.*)'.*/\1/p")
-	[ -z "$id" ] && err "Episode doesn't exist on this site"
+	[ -z "$id" ] && err "Episode doesn't exist on this site" || play_link
 	display=$(printf "%s" "$ep_id" | cut -d'/' -f2- | tr "-" " ")
-	play_link
 }
 
 play_link() {
 	printf "\33[2K\r${c_blue}Fetching video link"
-	data="$(curl -s "$(curl -s "$base_url/wp-admin/admin-ajax.php" -d "action=get_player_contents&a=$id" -H "X-Requested-With:XMLHttpRequest" | tr -d '\\' | sed -nE 's/.*src="(.*)" width.*/\1/p')")"
+	data="$(curl -s "$(curl -s "$base_url/wp-admin/admin-ajax.php" -d "action=get_player_contents&a=$id" -H "X-Requested-With:XMLHttpRequest" | tr -d '\\' | sed -nE 's/.*src="(.*)" width.*,.*/\1/p')")"
 	video_link="$(printf "%s" "$data" | sed -nE 's/[[:space:]]*<source src="(.*)" typ.*/\1/p')"
-	[ -z "$video_link" ] && printf "\33[2K\r${c_blue}link not found, another try, bear it with me" && sleep 1.5 && video_link="$(printf "%s" "$data" | sed -nE 's/[[:space:]]*file: "(.*)".$/\1/p')"
+	[ -z "$video_link" ] && video_link="$(printf "%s" "$data" | sed -nE 's/[[:space:]]*file: "(.*)".$/\1/p')"
 	if [ -z "$video_link" ];then 
 	    err "Video Url Not found" 
 	else
