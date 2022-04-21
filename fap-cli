@@ -1,0 +1,181 @@
+#!/bin/sh
+
+c_red="\033[1;31m"
+c_green="\033[1;32m"
+c_yellow="\033[1;33m"
+c_blue="\033[1;34m"
+c_magenta="\033[1;35m"
+c_cyan="\033[1;36m"
+c_reset="\033[0m"
+
+help_text () {
+        while IFS= read -r line; do
+	    printf "%s\n" "$line"
+	done <<-EOF
+	Usage:
+	    ${0##*/} [-d | -p <download_dir>] [<query>]
+	    ${0##*/} [-v] [<query>]
+	    ${0##*/} -h
+	
+	Options:
+	    -h show helptext
+	    -d download video
+	    -p download video to specified directory
+	    -v use VLC as the media player
+	EOF
+}
+
+die () {
+	printf "$c_red%s$c_reset\n" "$*" >&2
+	exit 0
+}
+
+err () {
+	printf "$c_red%s$c_reset\n" "$*" >&2
+}
+
+get_query () {
+	if [ -z "$*" ]; then
+		printf "Search Hentai: "
+		read -r hentai
+	else
+		hentai=$*
+	fi
+	query=$(printf "%s" "$hentai" | tr " " "+")
+}
+
+input() {
+	printf "$c_yellow  Episode??(1-%s):$c_reset " "$1"
+	read -r x
+	while [ -z "$x" ] || [ "$x" -lt "1" ] || [ "$x" -gt "$1" ];do 
+	    err "Invalid choice"
+	    printf "$c_yellow  Episode??(1-%s):$c_reset " "$1"
+	    read -r x
+	done
+	ep_no=$x
+	unset x
+}
+
+stream () {
+	case $player_fn in 
+		vlc)
+			setsid -f "$player_fn" --http-referrer="$base_url" "$1" > /dev/null 2>&1;;
+		mpv)
+			setsid -f "$player_fn" "$1" --referrer="$base_url" --force-media-title="$2" > /dev/null 2>&1;;
+	esac
+}
+
+download () {
+	printf "${c_blue}Downloading %s${c_reset}\n" "$2"
+	case $1 in
+	    *m3u8)
+		    ffmpeg -loglevel error -stats -referer "$base_url" -i "$1" -c copy "$download_dir/$u2.mp4";;
+	    *)
+		    aria2c --summary-interval=0 -x 16 -s 16 --referer="$base_url" "$1" --dir=$download_dir -o "$2.mp4" --download-result=hide;;
+	esac
+}
+
+get_show() {
+	printf "${c_blue}Searching query.."
+	results=$(curl -s "$base_url/?s=$query" | sed -nE 's_^[[:space:]]*<a href="https://hentaimama.io/tvshows/(.*)/">.$_\1_p')
+	[ -z "$results" ] && die "No search results found"
+	printf "\33[2K\r${c_green}Result found\n"
+	result=$(printf "%s" "$results" | fzf)
+	[ -z "$result" ] && die "No hentai selected"
+	printf "${c_blue}Fetching episode list"
+	ep_list=$(curl -s "$base_url/tvshows/$result/" | sed -nE 's_^[[:space:]]*<a href="https://hentaimama.io/(.*)/">.$_\1_p' | tac)
+	noofeps=$(printf "%s\n" "$ep_list" | wc -w)
+	printf "\33[2K\r${c_green}Episodes list fetched\n"
+	input "$noofeps"
+	get_ep_link
+}
+
+get_ep_link(){
+	tput clear
+	printf "${c_blue}Loading Episode"
+	ep_id=$(printf "%s" "$ep_list" | sed -n "${ep_no}p")
+	id=$(curl -s "$base_url/$ep_id/" | sed -nE "s/.*?p=(.*)'.*/\1/p")
+	[ -z "$id" ] && err "Episode doesn't exist on this site"
+	display=$(printf "%s" "$ep_id" | cut -d'/' -f2- | tr "-" " ")
+	play_link
+}
+
+play_link() {
+	printf "\33[2K\r${c_blue}Fetching video link"
+	data="$(curl -s "$(curl -s "$base_url/wp-admin/admin-ajax.php" -d "action=get_player_contents&a=$id" -H "X-Requested-With:XMLHttpRequest" | tr -d '\\' | sed -nE 's/.*src="(.*)" width.*/\1/p')")"
+	video_link="$(printf "%s" "$data" | sed -nE 's/[[:space:]]*<source src="(.*)" typ.*/\1/p')"
+	[ -z "$video_link" ] && printf "\33[2K\r${c_blue}link not found, another try, bear it with me" && sleep 1.5 && video_link="$(printf "%s" "$data" | sed -nE 's/[[:space:]]*file: "(.*)".$/\1/p')"
+	if [ -z "$video_link" ];then 
+	    err "Video Url Not found" 
+	else
+	    printf "\33[2K\r${c_green}Video link fetched${c_reset}"
+	    printf "\n%s\n" "$video_link"
+	    if [ "$is_download" -eq "0" ];then
+		stream "$video_link" "$display"
+	    else
+		download "$video_link" "$display"
+	    fi
+	fi
+}
+
+trap "exit 0" INT HUP
+base_url="https://hentaimama.io"
+player_fn="mpv"
+is_download=0
+download_dir=.
+
+while getopts 'dhp:v' OPT; do
+        case $OPT in
+                d)
+                        is_download=1
+                        ;;
+                p)
+                        is_download=1
+			download_dir=$OPTARG
+                        ;;
+                v)
+                        player_fn="vlc"
+                        ;;
+                *|h)
+                        help_text
+                        exit 0
+                        ;;
+	esac
+done
+shift $((OPTIND - 1))
+
+get_query "$*"
+get_show
+
+while :; do
+        printf "\n${c_green}Currently playing %s\n" "$display"
+        printf "$c_blue(%s) %s$c_reset\n" "s" "search next"
+        [ "$ep_no" != "$noofeps" ] && printf "$c_yellow(%s) %s$c_reset\n" "n" "next"
+        [ "$ep_no" != "1" ] && printf "$c_cyan(%s) %s$c_reset\n" "p" "previous"
+        printf "$c_blue(%s) %s$c_reset\n" "e" "select episode"
+	printf "$c_magenta(%s) %s$c_reset\n" "d" "download current video"
+	printf "$c_red(%s) %s$c_reset\n" "q" "exit"
+        printf "${c_green}Enter choice:$c_reset "
+        read choice
+        case $choice in
+                s)
+			get_query
+			get_show
+			;;
+                d)
+			download "$video_link" "$display";;
+                n)
+			ep_no=$((ep_no + 1))
+			[ "$ep_no" -gt "$noofeps" ] && err "Episode out of range" && ep_no=$((ep_no-1)) || get_ep_link;;
+                p)
+			ep_no=$((ep_no - 1))
+			[ "$ep_no" -lt "1" ] && err "Episode out of range" && ep_no=$((ep_no+1)) || get_ep_link;;
+                e)
+			input "$noofeps"
+                        get_ep_link;;
+                q)
+                        break;;
+                *)
+                        err "invalid choice";;
+        esac
+done

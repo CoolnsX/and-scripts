@@ -15,7 +15,7 @@ part(){
 	printf "${c_yellow}Enter Upto Seconds:${c_cyan}"
 	read dur
 	[ -z "$2" ] &&
-	ffmpeg -i $(yt-dlp -f b --get-url "$1") -ss $start -t $dur -map 0 -codec copy /storage/7689-5BBD/$(date +%s).mp4 ||
+	ffmpeg -i $(yt-dlp -f b --get-url "$1") -ss $start -t $dur -map 0 /storage/7689-5BBD/$(date +%s).mp4 ||
 	ffmpeg -i $(yt-dlp -f 'ba' --get-url "$1") -ss $start -t $dur -map a -q:a 0 /storage/7689-5BBD/$(date +%s).mp3
 }
 
