@@ -25,31 +25,21 @@ help_text () {
 	EOF
 }
 
-die () {
-	printf "$c_red%s$c_reset\n" "$*" >&2
-	exit 0
-}
-
 err () {
 	printf "$c_red%s$c_reset\n" "$*" >&2
 }
 
 get_query () {
-	if [ -z "$*" ]; then
-		printf "Search Hentai: "
-		read -r hentai
-	else
-		hentai=$*
-	fi
-	query=$(printf "%s" "$hentai" | tr " " "+")
+	[ -z "$*" ] && printf "${c_green}Search>${c_reset} " && read -r query || query=$*
+	query=$(printf "%s" "$query" | tr " " "+")
 }
 
 input() {
-    printf "$c_yellow  Episode??(1-%s)|(q):$c_reset " "$1"
+    printf "$c_yellow Episode??(1-%s)>$c_reset " "$1"
 	read -r x
-	while [ -z "$x" ] || [ "$x" -lt "1" ] 2>/dev/null || [ "$x" -gt "$1" ] 2>/dev/null ;do 
+	while [ -z "$x" ] || ! [ "$x" -eq "$x" ] 2>/dev/null || [ "$x" -lt "1" ] 2>/dev/null || [ "$x" -gt "$1" ] 2>/dev/null ;do 
 	    err "Invalid choice"
-	    printf "$c_yellow  Episode??(1-%s)|(q):$c_reset " "$1"
+	    printf "$c_yellow Episode??(1-%s)>$c_reset " "$1"
 	    read -r x
 	done
 	ep_no=$x
@@ -78,11 +68,11 @@ download () {
 get_show() {
 	printf "${c_blue}Searching query.."
 	results=$(curl -s "$base_url/?s=$query" | sed -nE 's_^[[:space:]]*<a href="https://hentaimama.io/tvshows/(.*)/">.$_\1_p')
-	[ -z "$results" ] && die "No search results found"
-	printf "\33[2K\r${c_green}Result found\n"
+	[ -z "$results" ] && printf "\33[2K\r${c_red}No search results found${c_reset}" && exit 0
+	printf "\33[2K\r${c_green}Results found\n"
 	result=$(printf "%s" "$results" | fzf)
-	[ -z "$result" ] && die "No hentai selected"
-	printf "${c_blue}Fetching episode list"
+	[ -z "$result" ] && err "No hentai selected" && exit 0
+	printf "${c_magenta}selected $result\n${c_blue}Fetching episode list"
 	ep_list=$(curl -s "$base_url/tvshows/$result/" | sed -nE 's_^[[:space:]]*<a href="https://hentaimama.io/(.*)/">.$_\1_p' | tac)
 	noofeps=$(printf "%s\n" "$ep_list" | wc -l)
 	printf "\33[2K\r${c_green}Episodes list fetched\n"
@@ -91,13 +81,12 @@ get_show() {
 }
 
 get_ep_link(){
-	[ "$ep_no" = "q" ] && exit 0
 	tput clear
-	printf "${c_blue}Loading Episode"
+	printf "${c_blue}Loading Episode $ep_no"
 	ep_id=$(printf "%s" "$ep_list" | sed -n "${ep_no}p")
 	id=$(curl -s "$base_url/$ep_id/" | sed -nE "s/.*?p=(.*)'.*/\1/p")
-	[ -z "$id" ] && err "Episode doesn't exist on this site" || play_link
 	display=$(printf "%s" "$ep_id" | cut -d'/' -f2- | tr "-" " ")
+	[ -z "$id" ] && printf "\33[2K\r${c_red}Episode doesn't exist on this site${c_reset}" || play_link
 }
 
 play_link() {
@@ -106,9 +95,9 @@ play_link() {
 	video_link="$(printf "%s" "$data" | sed -nE 's/[[:space:]]*<source src="(.*)" typ.*/\1/p')"
 	[ -z "$video_link" ] && video_link="$(printf "%s" "$data" | sed -nE 's/[[:space:]]*file: "(.*)".$/\1/p')"
 	if [ -z "$video_link" ];then 
-	    err "Video Url Not found" 
+	    printf "\33[2K\r${c_red}Video Url not found${c_reset}\n"
 	else
-	    printf "\33[2K\r${c_green}Video link fetched${c_reset}"
+	    printf "\33[2K\r${c_green}Video link fetched${c_reset}\n"
 	    printf "\n%s\n" "$video_link"
 	    if [ "$is_download" -eq "0" ];then
 		stream "$video_link" "$display"
@@ -149,19 +138,14 @@ get_show
 
 while :; do
         printf "\n${c_green}Currently playing %s\n" "$display"
-        printf "$c_blue(%s) %s$c_reset\n" "s" "search next"
         [ "$ep_no" != "$noofeps" ] && printf "$c_yellow(%s) %s$c_reset\n" "n" "next"
         [ "$ep_no" != "1" ] && printf "$c_cyan(%s) %s$c_reset\n" "p" "previous"
-        printf "$c_blue(%s) %s$c_reset\n" "e" "select episode"
 	printf "$c_magenta(%s) %s$c_reset\n" "d" "download current video"
+        printf "$c_blue(%s) %s$c_reset\n" "e" "select episode"
 	printf "$c_red(%s) %s$c_reset\n" "q" "exit"
-        printf "${c_green}Enter choice:$c_reset "
+        printf "${c_green}>$c_reset "
         read choice
         case $choice in
-                s)
-			get_query
-			get_show
-			;;
                 d)
 			download "$video_link" "$display";;
                 n)
