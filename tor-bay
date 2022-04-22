@@ -12,13 +12,14 @@ display() {
 }
 
 [ -z "$*" ] && printf "Search torrent:" && read -r query || query=$*
+printf "\033[1;34mSearching query"
 query=$(printf "%s" "$query" | tr " " "+")
 data=$(curl -s "https://apibay.org/q.php?q=$query&cat=0" | sed 's/},/}\n/g' | tr -d "[|]")
+printf "\33[2K\r\033[1;35mtidying up data"
 size=$(printf "%s" "$data" | sed -nE 's/.*name.*size":"(.*)",.*user.*/\1/p')
 name_seed=$(printf "%s" "$data" | sed -nE 's/.*name":"(.*)","info_hash.*seeders":"(.*)",.*num.*/\2] \1/p')
 sel=$(display "$size" "$name_seed" | fzf --prompt="select torrent >" | cut -d" " -f3-)
-[ -z "$sel" ] && exit 0
-echo "Downloading $sel" 
+[ -z "$sel" ] && exit 0 || printf "\33[2K\r\033[1;32mSelected $sel\n\033[1;34mmagnet link>>\033[0m\n"
 magnet="magnet:?xt=urn:btih:$(printf "%s" "$data" | sed -nE 's/.*name":"(.*)","info_hash":"(.*)",.*leech.*/\2\t\1/p' | sed -n "s/\t$sel//p")"
 termux-clipboard-set "$magnet"
 ./torrent "$magnet"

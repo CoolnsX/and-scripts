@@ -13,6 +13,7 @@ baseurl="https://www.1337xx.to"
 cachedir="$HOME/.cache/pirokit"
 query="$(sed 's/ /%20/g' <<<$query)"
 
+printf "\033[1;34mSearching query"
 curl -s -G $baseurl/search/$query/1/ > $cachedir/tmp.html
 
 # Get Titles
@@ -21,10 +22,10 @@ grep -o '<a href="/torrent/.*</a>' $cachedir/tmp.html |
 
 result_count=$(wc -l $cachedir/titles.bw | awk '{print $1}')
 if [ "$result_count" -lt 1 ]; then
-  printf "😔 No Result found. Try again\n"
+  printf "\33[2K\r\033[1;31m😔 No Result found. Try again\n"
   exit 0
 fi
-
+printf "\33[2K\r\033[1;35mprocessing/tidying up data"
 # Seeders and Leechers
 grep -o '<td class="coll-2 seeds.*</td>\|<td class="coll-3 leeches.*</td>' $cachedir/tmp.html |
   sed 's/<[^>]*>//g' | sed 'N;s/\n/ /' > $cachedir/seedleech.bw
@@ -50,10 +51,8 @@ awk '{print "[S:"$1 ", L:"$2"]" }' $cachedir/seedleech.bw > $cachedir/tmp && mv 
 LINE=$(paste -d\   $cachedir/size.bw $cachedir/seedleech.bw $cachedir/titles.bw | fzf | cut -d\- -f1 | awk '{$1=$1; print}')
 
 url=$(head -n $LINE $cachedir/links.bw | tail -n +$LINE)
-[ -z "$url" ] && exit 0
-
-echo "${baseurl}${url}"
+[ -z "$url" ] && exit 0 || printf "\33[2K\r\033[1;32mSelected $url\n\033[1;36mFetching magnet link.."
 magnet=$(curl -s "${baseurl}${url}" | sed -nE 's/.*class="(.*)" href="([^"]*)" .*/\2/p')
-
+printf "\33[2K\r\033[1;34mmagnet link>>\033[0m\n"
 termux-clipboard-set "$magnet"
 ./torrent "$magnet"
