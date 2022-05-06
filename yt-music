@@ -1,0 +1,15 @@
+#!/bin/sh
+# download/stream high quality mp3 music from youtube using ytmp3.com site
+#this script give link which can be used to download or stream music
+
+[ -z "$*" ] && printf "enter(paste) yt-id or link:" && read -r id || id=$*
+id=$(printf "$id" | cut -d"=" -f2 | cut -d"/" -f4)
+printf "\033[1;34mFetching page"
+token=$(curl -s "https://ytmp3x.com/$id" | sed -nE 's/.*token":"(.*)","adg.*/\1/p')
+printf "\33[2K\r\033[1;35mFetching tokens"
+[ -z "$token" ] || token2=$(curl -s -X POST -H "X-Requested-With:XMLHttpRequest" 'https://ytmp3x.com/ajax' -d "purpose=audio&token=$token" | sed -nE 's/.*audio":"(.*)"\}/\1/p')
+printf "\33[2K\r\033[1;36mFetching mp3 link"
+[ -z "$token2" ] || url=$(curl -s -X POST -H "X-Requested-With:XMLHttpRequest" "https://ytmp3x.com/ajax" -d "purpose=download&token=$token2&b=320&r=https://ytmp3x.com/$id" | tr -d '\\' | sed -nE 's/.*mp3url":"(.*)"\}/\1/p')
+[ -z "$url" ] && printf "\33[2K\r\033[1;31m unable to fetch mp3 link\033[0m" && exit 0
+printf "\32[2K\r\033[1;32mDownloading\033[0m %s\n" "$url"
+aria2c --summary-interval=0 -x 16 -s 16 "$url" --dir=/storage/7689-5BBD/Music --download-result=hide && termux-notification -t "yt-music" -c "Music Downloaded" || (termux-notification -t "yt-music" -c "Downloading failed" && exit 0)
