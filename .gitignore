@@ -6,10 +6,10 @@ y
 x
 dl
 ndl
+bench
 .zcompdump
 .cache/   
 dra-cla/
-*-cli
 lol*/
 .npm/
 .npmrc

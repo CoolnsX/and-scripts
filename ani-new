@@ -18,8 +18,8 @@ url=$(curl -A "$agent" -s "$base_url" | sed -nE 's_.*<a href="/videos/([^"]*)">_
 [ -z "$url" ] && exit 0 || printf "\033[1;35mSelected $url\n\033[1;36mLoading Episode.."
 refr=$(curl -A "$agent" -s "$base_url/videos/$url" | sed -nE 's/.*iframe src="(.*)" al.*/\1/p')
 printf "\33[2K\r\033[1;34mFetching Embed links"
-resp="$(curl -A "$agent" -s "https:$refr")"
-links=$(printf "%s" "$resp" | sed -nE 's/.*data-status="1".*data-video="(.*)">.*/\1/p')
+resp="$(curl -A "$agent" -s "https:$refr" | sed -nE 's/.*class="container-(.*)">/\1/p ; s/.*class="wrapper container-(.*)">/\1/p ; s/.*class=".*videocontent-(.*)">/\1/p ; s/.*data-value="(.*)">.*/\1/p ; s/.*data-status="1".*data-video="(.*)">.*/\1/p')"
+links=$(printf "%s" "$resp" | sed -n '5,$ p')
 
 mp4up_link=$(printf "$links" | grep "mp4upload")
 printf "\33[2K\r\033[1;34mFetching mp4upload links < \033[0m%s" "$(printf "$mp4up_link" | cut -d"-" -f2)"
@@ -40,11 +40,11 @@ printf "\n\033[1;34mFetching xstreamcdn links <\033[0m $fb_id"
 
 id=$(printf "%s" "$refr" | sed -nE 's/.*id=(.*)&title.*/\1/p')
 printf "\n\033[1;34mFetching goload links < \033[0m$id"
-secret_key=$(printf "%s" "$resp" | sed -nE 's/.*class="container-(.*)">/\1/p' | tr -d "\n" | od -A n -t x1 | tr -d " |\n")
-iv=$(printf "%s" "$resp" | sed -nE 's/.*class="wrapper container-(.*)">/\1/p' | tr -d "\n" | od -A n -t x1 | tr -d " |\n")
-second_key=$(printf "%s" "$resp" | sed -nE 's/.*class=".*videocontent-(.*)">/\1/p' | tr -d "\n" | od -A n -t x1 | tr -d " |\n")
-token=$(printf "%s" "$resp" | sed -nE 's/.*data-value="(.*)">.*/\1/p' | base64 -d | openssl enc -d -aes256 -K "$secret_key" -iv "$iv" | sed -nE 's/.*&(token.*)/\1/p')
-ajax=$(printf '%s' "$id" |openssl enc -e -aes256 -K "$secret_key" -iv "$iv" | base64)
+secret_key=$(printf "%s" "$resp" | sed -n '2p' | tr -d "\n" | od -A n -t x1 | tr -d " |\n")
+iv=$(printf "%s" "$resp" | sed -n '3p' | tr -d "\n" | od -A n -t x1 | tr -d " |\n")
+second_key=$(printf "%s" "$resp" | sed -n '4p' | tr -d "\n" | od -A n -t x1 | tr -d " |\n")
+token=$(printf "%s" "$resp" | head -1 | base64 -d | openssl enc -d -aes256 -K "$secret_key" -iv "$iv" | sed -nE 's/.*&(token.*)/\1/p')
+ajax=$(printf '%s' "$id" | openssl enc -e -aes256 -K "$secret_key" -iv "$iv" -a)
 printf "\33[2K\r\033[1;35mEncrpyting/Decrypting some shit"
 video="$(curl -A "$agent" -s -H "X-Requested-With:XMLHttpRequest" "${base_url}/encrypt-ajax.php?id=${ajax}&alias=${id}&${token}" | sed -e 's/{"data":"//' -e 's/"}/\n/' -e 's/\\//g' | base64 -d | openssl enc -d -aes256 -K "$second_key" -iv "$iv" | sed -e 's/\].*/\]/' -e 's/\\//g' | grep -Eo 'https:\/\/[-a-zA-Z0-9@:%._\+~#=][a-zA-Z0-9][-a-zA-Z0-9@:%_\+.~#?&\/\/=]*' | head -4 | tail -1)"
 [ -z "$video" ] || down "$base_url" "$video"

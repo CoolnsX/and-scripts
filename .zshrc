@@ -1,6 +1,6 @@
 #user-defined functions
 aria(){
-	aria2c -s 16 -x 16 --referer="$1" --dir=7689-5BBD "$2" }
+	aria2c -s 16 -x 16 --referer="$1" --dir=7689-5BBD "$2" --check-certificate=false --download-result=hide --summary-interval=0 }
 
 gitp(){
     git add .
