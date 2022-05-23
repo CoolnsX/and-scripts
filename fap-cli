@@ -137,7 +137,7 @@ get_query "$*"
 get_show
 
 while :; do
-        printf "\n${c_green}Currently playing %s\n" "$display"
+        printf "\n${c_green}Currently playing %s/%s\n" "$display" "$noofeps"
         [ "$ep_no" != "$noofeps" ] && printf "$c_yellow(%s) %s$c_reset\n" "n" "next"
         [ "$ep_no" != "1" ] && printf "$c_cyan(%s) %s$c_reset\n" "p" "previous"
 	printf "$c_magenta(%s) %s$c_reset\n" "d" "download current video"

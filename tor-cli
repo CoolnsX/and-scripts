@@ -53,6 +53,6 @@ LINE=$(paste -d\   $cachedir/size.bw $cachedir/seedleech.bw $cachedir/titles.bw 
 url=$(head -n $LINE $cachedir/links.bw | tail -n +$LINE)
 [ -z "$url" ] && exit 0 || printf "\33[2K\r\033[1;32mSelected $url\n\033[1;36mFetching magnet link.."
 magnet=$(curl -s "${baseurl}${url}" | sed -nE 's/.*class="(.*)" href="([^"]*)" .*/\2/p')
-printf "\33[2K\r\033[1;34mmagnet link>>\033[0m\n"
+printf "\33[2K\r"
 termux-clipboard-set "$magnet"
 ./torrent "$magnet"

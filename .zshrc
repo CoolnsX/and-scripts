@@ -8,6 +8,11 @@ gitp(){
     $HOME/token
     git push
 }
+
+link() {
+    curl -F"file=@$*" https://0x0.st
+}
+
 # Lines configured by zsh-newuser-install
 alias v="nvim"
 alias notirm="termux-notification-remove"
@@ -17,8 +22,6 @@ alias rm="rm -v"
 alias grep="grep --color=auto"
 alias ll="ls --color=auto -alh"
 alias ls="ls --color=auto"
-
-source $PREFIX/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 
 HISTFILE=~/.histfile
 HISTSIZE=200
@@ -35,3 +38,4 @@ zstyle ':completion:*' menu select
 # End of lines added by compinstall
 
 eval "$(starship init zsh)"
+source $PREFIX/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
