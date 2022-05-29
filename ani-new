@@ -8,9 +8,9 @@ down () {
 	[ "$ch" = "stream" ] && setsid -f mpv "$2" >/dev/null 2>&1 && exit 0
 	case $2 in
 	    *m3u8*)
-		    ffmpeg -loglevel error -stats -referer "$1" -user_agent "$agent" -i "$2" -c copy "/storage/7689-5BBD/$url.mp4" && termux-notification -t "Episode Downloaded" -c "$url" || termux-notification -t "Downloading failed" -c "$url";;
+		    ffmpeg -loglevel error -stats -referer "$1" -user_agent "$agent" -i "$2" -c copy "$MMC/$url.mp4" && termux-notification -t "Episode Downloaded" -c "$url" || termux-notification -t "Downloading failed" -c "$url";;
 	    *)
-		    aria2c -U "$agent" --check-certificate=false --summary-interval=0 -x 16 -s 16 --referer="$1" "$2" --dir=/storage/7689-5BBD -o "$url.mp4" --download-result=hide && termux-notification -t "Episode Downloaded" -c "$url" || termux-notification -t "Downloading failed" -c "$url";;
+		    aria2c -U "$agent" --check-certificate=false --summary-interval=0 -x 16 -s 16 --referer="$1" "$2" --dir=$MMC -o "$url.mp4" --download-result=hide && termux-notification -t "Episode Downloaded" -c "$url" || termux-notification -t "Downloading failed" -c "$url";;
 	esac
 	exit 0
 }

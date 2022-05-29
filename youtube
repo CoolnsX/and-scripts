@@ -15,21 +15,21 @@ part(){
 	printf "${c_yellow}Enter Upto Seconds:${c_cyan}"
 	read dur
 	[ -z "$2" ] &&
-	ffmpeg -i $(yt-dlp -f b --get-url "$1") -ss $start -t $dur -map 0 /storage/7689-5BBD/$(date +%s).mp4 ||
-	ffmpeg -i $(yt-dlp -f 'ba' --get-url "$1") -ss $start -t $dur -map a -q:a 0 /storage/7689-5BBD/$(date +%s).mp3
+	ffmpeg -i $(yt-dlp -f b --get-url "$1") -ss $start -t $dur -map 0 $MMC/$(date +%s).mp4 ||
+	ffmpeg -i $(yt-dlp -f 'ba' --get-url "$1") -ss $start -t $dur -map a -q:a 0 $MMC/$(date +%s).mp3
 }
 
 #program starts from here..
 x=$(termux-clipboard-get)
-[ "$1" = "v" ] && yt-dlp "$x" -o "/storage/7689-5BBD/%(title)s.%(ext)s" && termux-notification -c "video downloaded" && exit 0
+[ "$1" = "v" ] && yt-dlp "$x" -o "$MMC/%(title)s.%(ext)s" && termux-notification -c "video downloaded" && exit 0
 printf "\n${c_blue} video link :${c_magenta}$x\n"
 printf "${c_yellow}Download>>\n${c_blue}[a]Audio only\n${c_magenta}[f]part of Audio only\n${c_green}[v]Full video\n${c_cyan}[p]Part of video\n${c_red}[q]Quit"
 printf "\n${c_reset}Enter choice:${c_green}"
 read choice
 case $choice in
-	a)	yt-dlp -f 'ba' -x --audio-format mp3 "$x" -o "/storage/7689-5BBD/%(title)s.%(ext)s" && termux-notification -c "audio downloaded";;
+	a)	yt-dlp -f 'ba' -x --audio-format mp3 "$x" -o "$MMC/%(title)s.%(ext)s" && termux-notification -c "audio downloaded";;
 	f)	part "$x" "1" && termux-notification -c "audio downloaded";;
-	v)	yt-dlp "$x" -o "/storage/7689-5BBD/%(title)s.%(ext)s" && termux-notification -c "video downloaded";;
+	v)	yt-dlp "$x" -o "$MMC/%(title)s.%(ext)s" && termux-notification -c "video downloaded";;
 	p)	part "$x" && termux-notification -c "video downloaded";;
 	q)	break;;
 esac

@@ -15,6 +15,7 @@ link() {
 
 # Lines configured by zsh-newuser-install
 export EDITOR=nvim
+export MMC=/storage/BB90-191C
 alias v="nvim"
 alias notirm="termux-notification-remove"
 alias exit="exit 0"

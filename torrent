@@ -11,7 +11,7 @@ c_reset="\033[0m"
 down(){
     tput reset
     termux-notification --ongoing -i 2 -t "Torrent" -c "Downloading"
-    aria2c --summary-interval=0 --select-file=$2 --dir=/storage/7689-5BBD --seed-time=0 $1 && termux-notification -i 2 -t "Torrent" -c "Download complete" || termux-notification -i 2 -t "Torrent" -c "Download error!!"
+    aria2c --summary-interval=0 --select-file=$2 --dir=$MMC --seed-time=0 $1 && termux-notification -i 2 -t "Torrent" -c "Download complete" || termux-notification -i 2 -t "Torrent" -c "Download error!!"
 }
 
 trap "rm -f $HOME/.cache/*.torrent;termux-notification-remove 2;exit 0" INT HUP
