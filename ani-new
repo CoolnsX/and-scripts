@@ -8,9 +8,9 @@ down () {
 	[ "$ch" = "stream" ] && setsid -f mpv "$2" >/dev/null 2>&1 && exit 0
 	case $2 in
 	    *m3u8*)
-		    ffmpeg -loglevel error -stats -referer "$1" -user_agent "$agent" -i "$2" -c copy "/storage/7689-5BBD/$url.mp4" && termux-notification -t "Episode Downloaded" -c "$url" || (termux-notification -t "Downloading failed" -c "$url" && exit 0);;
+		    ffmpeg -loglevel error -stats -referer "$1" -user_agent "$agent" -i "$2" -c copy "/storage/7689-5BBD/$url.mp4" && termux-notification -t "Episode Downloaded" -c "$url" || termux-notification -t "Downloading failed" -c "$url";;
 	    *)
-		    aria2c -U "$agent" --check-certificate=false --summary-interval=0 -x 16 -s 16 --referer="$1" "$2" --dir=/storage/7689-5BBD -o "$url.mp4" --download-result=hide && termux-notification -t "Episode Downloaded" -c "$url" || (termux-notification -t "Downloading failed" -c "$url" && exit 0);;
+		    aria2c -U "$agent" --check-certificate=false --summary-interval=0 -x 16 -s 16 --referer="$1" "$2" --dir=/storage/7689-5BBD -o "$url.mp4" --download-result=hide && termux-notification -t "Episode Downloaded" -c "$url" || termux-notification -t "Downloading failed" -c "$url";;
 	esac
 	exit 0
 }
@@ -32,10 +32,10 @@ printf "\33[2K\r\033[1;34mFetching mp4upload links < \033[0m%s" "$(printf "$mp4u
 
 dood_id=$(printf "$links" | sed -n "s_.*dood.*/e/__p")
 printf "\n\033[1;34mFetching doodstream links <\033[0m $dood_id"
-[ -z "$dood_id" ] || dood_link=$(curl -A "$agent" -s "https://dood.ws/d/$dood_id" | sed -nE 's/<a href="(.*)" class="btn.*justify.*/\1/p')
-sleep 0.5
-[ -z "$dood_link" ] || dood_video=$(curl -A "$agent" -s "https://dood.ws${dood_link}" | sed -nE "s/.*window.open.*'(.*)',.*/\1/p")
-[ -z "$dood_video" ] && printf "\33[2K\r\033[1;31m unable to fetch doodstream link\033[0m" || down "https://dood.ws/d/$dood_id" "$dood_video" "doodstream"
+[ -z "$dood_id" ] || dood_link=$(curl -A "$agent" -s "https://dood.ws/d/$dood_id" | sed -nE 's/<a href="(.*)" class="btn.*justify.*/\1/p') 
+[ -z "$dood_id" ] || sleep 0.5
+[ -z "$dood_link" ] || dood_video=$(curl -A "$agent" -s "https://dood.to${dood_link}" | sed -nE "s/.*window.open.*'(.*)',.*/\1/p")
+[ -z "$dood_video" ] && printf "\33[2K\r\033[1;31m unable to fetch doodstream link\033[0m" || down "https://dood.to/d/$dood_id" "$dood_video" "doodstream"
 
 fb_id=$(printf "$links" | sed -n "s_.*fembed.*/v/__p")
 printf "\n\033[1;34mFetching xstreamcdn links <\033[0m $fb_id"
@@ -47,12 +47,12 @@ printf "\n\033[1;34mFetching goload links < \033[0m$id"
 secret_key=$(printf "%s" "$resp" | sed -n '2p' | tr -d "\n" | od -A n -t x1 | tr -d " |\n")
 iv=$(printf "%s" "$resp" | sed -n '3p' | tr -d "\n" | od -A n -t x1 | tr -d " |\n")
 second_key=$(printf "%s" "$resp" | sed -n '4p' | tr -d "\n" | od -A n -t x1 | tr -d " |\n")
-token=$(printf "%s" "$resp" | head -1 | base64 -d | openssl enc -d -aes256 -K "$secret_key" -iv "$iv" | sed -nE 's/.*&(token.*)/\1/p')
-ajax=$(printf '%s' "$id" | openssl enc -e -aes256 -K "$secret_key" -iv "$iv" -a)
+token=$(printf "%s" "$resp" | head -1 | base64 -d | openssl enc -d -aes256 -K "$secret_key" -iv "$iv" 2>/dev/null | sed -nE 's/.*&(token.*)/\1/p')
+ajax=$(printf '%s' "$id" | openssl enc -e -aes256 -K "$secret_key" -iv "$iv" -a 2>/dev/null)
 printf "\33[2K\r\033[1;35mEncrpyting/Decrypting some shit"
-video="$(curl -A "$agent" -s -H "X-Requested-With:XMLHttpRequest" "${base_url}/encrypt-ajax.php?id=${ajax}&alias=${id}&${token}" | sed -e 's/{"data":"//' -e 's/"}/\n/' -e 's/\\//g' | base64 -d | openssl enc -d -aes256 -K "$second_key" -iv "$iv" | sed -e 's/\].*/\]/' -e 's/\\//g' | grep -Eo 'https:\/\/[-a-zA-Z0-9@:%._\+~#=][a-zA-Z0-9][-a-zA-Z0-9@:%_\+.~#?&\/\/=]*' | head -4 | tail -1)"
-[ -z "$video" ] || down "$base_url" "$video" "goload"
+video="$(curl -A "$agent" -s -H "X-Requested-With:XMLHttpRequest" "${base_url}/encrypt-ajax.php?id=${ajax}&alias=${id}&${token}" | sed -e 's/{"data":"//' -e 's/"}/\n/' -e 's/\\//g' | base64 -d | openssl enc -d -aes256 -K "$second_key" -iv "$iv" 2>/dev/null | sed -e 's/\].*/\]/' -e 's/\\//g' | grep -Eo 'https:\/\/[-a-zA-Z0-9@:%._\+~#=][a-zA-Z0-9][-a-zA-Z0-9@:%_\+.~#?&\/\/=]*' | head -4 | tail -1)"
+[ -z "$video" ] && printf "\33[2K\r\033[1;31m unable to fetch goload link\033[0m" || down "$base_url" "$video" "goload"
 
-printf "\n\nwell.. u hv reached to end of script. so it means u didn't selected any mirror.. exiting.."
+printf "\n\n\033[1;31mwell.. u hv reached to end of script. so it means u didn't selected any mirror(or script didn't worked).. exiting.."
 sleep 1
 exit 0

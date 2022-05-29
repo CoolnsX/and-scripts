@@ -76,7 +76,7 @@ get_show() {
 	ep_list=$(curl -s "$base_url/tvshows/$result/" | sed -nE 's_^[[:space:]]*<a href="https://hentaimama.io/(.*)/">.$_\1_p' | tac)
 	noofeps=$(printf "%s\n" "$ep_list" | wc -l)
 	printf "\33[2K\r${c_green}Episodes list fetched\n"
-	input "$noofeps"
+	[ "$noofeps" -eq 1 ] && ep_no=1 || input "$noofeps"
 	get_ep_link
 }
 

@@ -14,6 +14,7 @@ link() {
 }
 
 # Lines configured by zsh-newuser-install
+export EDITOR=nvim
 alias v="nvim"
 alias notirm="termux-notification-remove"
 alias exit="exit 0"

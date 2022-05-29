@@ -5,6 +5,7 @@ c_green="\033[1;32m"
 c_yellow="\033[1;33m"
 c_blue="\033[1;34m"
 c_cyan="\033[1;36m"
+c_magenta="\033[1;35m"
 c_reset="\033[0m"
 
 down(){
@@ -15,15 +16,15 @@ down(){
 
 trap "rm -f $HOME/.cache/*.torrent;termux-notification-remove 2;exit 0" INT HUP
 [ -z "$*" ] && magnet=$(termux-clipboard-get) || magnet=$*
-printf "${c_blue}magnet link >>${c_reset}\n%s\n" "$magnet"
-printf "${c_yellow}Download >>\n${c_green}[f]ull torrent\n${c_cyan}[p]artial torrent \n${c_red}[q]uit"
-printf "${c_reset}\n\tenter choice:"
+printf "\n${c_blue}Magnet link >>${c_reset}\n%s\n" "$magnet"
+printf "\n${c_yellow}Download >>\n${c_green}(f)ull torrent\n${c_cyan}(s)elective torrent \n${c_red}(q)uit"
+printf "${c_magenta}\n  (input)>>${c_reset} "
 read -r ch
 case $ch in
     f)	down "$magnet";;
-    p)	aria2c --dir=$HOME/.cache --bt-metadata-only=true --bt-save-metadata=true "$magnet"
+    s)	aria2c --dir=$HOME/.cache --bt-metadata-only=true --bt-save-metadata=true "$magnet"
     	tput reset
-    	aria2c --show-files=true $HOME/.cache/*.torrent 
+	aria2c --show-files=true $HOME/.cache/*.torrent
     	printf "\nEnter idx(default all):"
     	read -r ind
 	down "$HOME/.cache/*.torrent" "$ind"
