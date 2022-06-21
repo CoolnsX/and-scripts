@@ -8,9 +8,9 @@ down () {
 	[ "$ch" = "stream" ] && setsid -f mpv "$2" >/dev/null 2>&1 && exit 0
 	case $2 in
 	    *m3u8*)
-		    ffmpeg -loglevel error -stats -referer "$1" -user_agent "$agent" -i "$2" -c copy "$MMC/$url.mp4" && termux-notification -t "Episode Downloaded" -c "$url" || termux-notification -t "Downloading failed" -c "$url";;
+		    ffmpeg -loglevel error -stats -referer "$1" -user_agent "$agent" -i "$2" -c copy "/storage/BB90-191C/$url.mp4" && termux-notification -t "Episode Downloaded" -c "$url" || termux-notification -t "Downloading failed" -c "$url";;
 	    *)
-		    aria2c -U "$agent" --check-certificate=false --summary-interval=0 -x 16 -s 16 --referer="$1" "$2" --dir=$MMC -o "$url.mp4" --download-result=hide && termux-notification -t "Episode Downloaded" -c "$url" || termux-notification -t "Downloading failed" -c "$url";;
+		    aria2c -U "$agent" --check-certificate=false --summary-interval=0 -x 16 -s 16 --referer="$1" "$2" --dir=/storage/BB90-191C -o "$url.mp4" --download-result=hide && termux-notification -t "Episode Downloaded" -c "$url" || termux-notification -t "Downloading failed" -c "$url";;
 	esac
 	exit 0
 }
@@ -23,21 +23,20 @@ trap "exit 0" INT HUP
 refr=$(curl -A "$agent" -s "$base_url/videos/$url" | sed -nE 's/.*iframe src="(.*)" al.*/\1/p')
 printf "\33[2K\r\033[1;34mFetching Embed links"
 resp="$(curl -A "$agent" -s "https:$refr" | sed -nE 's/.*class="container-(.*)">/\1/p ; s/.*class="wrapper container-(.*)">/\1/p ; s/.*class=".*videocontent-(.*)">/\1/p ; s/.*data-value="(.*)">.*/\1/p ; s/.*data-status="1".*data-video="(.*)">.*/\1/p')"
-links=$(printf "%s" "$resp" | sed -n '5,$ p')
 
-mp4up_link=$(printf "$links" | grep "mp4upload")
+mp4up_link=$(printf "$resp" | grep "mp4upload")
 printf "\33[2K\r\033[1;34mFetching mp4upload links < \033[0m%s" "$(printf "$mp4up_link" | cut -d"-" -f2)"
 [ -z "$mp4up_link" ] || mp4up_video=$(curl -A "$agent" -s "$mp4up_link" -H "DNT: 1" | sed -nE 's_.*embed\|(.*)\|.*blank.*\|(.*)\|(.*)\|(.*)\|(.*)\|src.*_https://\1.mp4upload.com:\5/d/\4/\3.\2_p')
 [ -z "$mp4up_video" ] && printf "\33[2K\r\033[1;31m unable to fetch mp4upload link\033[0m" || down "$mp4up_link" "$mp4up_video" "mp4upload"
 
-dood_id=$(printf "$links" | sed -n "s_.*dood.*/e/__p")
+dood_id=$(printf "$resp" | sed -n "s_.*dood.*/e/__p")
 printf "\n\033[1;34mFetching doodstream links <\033[0m $dood_id"
 [ -z "$dood_id" ] || dood_link=$(curl -A "$agent" -s "https://dood.ws/d/$dood_id" | sed -nE 's/<a href="(.*)" class="btn.*justify.*/\1/p') 
 [ -z "$dood_id" ] || sleep 0.5
 [ -z "$dood_link" ] || dood_video=$(curl -A "$agent" -s "https://dood.to${dood_link}" | sed -nE "s/.*window.open.*'(.*)',.*/\1/p")
 [ -z "$dood_video" ] && printf "\33[2K\r\033[1;31m unable to fetch doodstream link\033[0m" || down "https://dood.to/d/$dood_id" "$dood_video" "doodstream"
 
-fb_id=$(printf "$links" | sed -n "s_.*fembed.*/v/__p")
+fb_id=$(printf "$resp" | sed -n "s_.*fembed.*/v/__p")
 printf "\n\033[1;34mFetching xstreamcdn links <\033[0m $fb_id"
 [ -z "$fb_id" ] || fb_video=$(curl -A "$agent" -s -X POST "https://fembed-hd.com/api/source/$fb_id" -H "x-requested-with:XMLHttpRequest" | sed -e 's/\\//g' -e 's/.*data"://' | tr "}" "\n" | sed -nE 's/.*file":"(.*)","label.*/\1/p' | tail -1)
 [ -z "$fb_video" ] && printf "\33[2K\r\033[1;31m unable to fetch xstreamcdn link\033[0m" || down "https://fembed-hd.com/v/$fb_id" "$fb_video" "xstreamcdn"
@@ -50,8 +49,12 @@ second_key=$(printf "%s" "$resp" | sed -n '4p' | tr -d "\n" | od -A n -t x1 | tr
 token=$(printf "%s" "$resp" | head -1 | base64 -d | openssl enc -d -aes256 -K "$secret_key" -iv "$iv" 2>/dev/null | sed -nE 's/.*&(token.*)/\1/p')
 ajax=$(printf '%s' "$id" | openssl enc -e -aes256 -K "$secret_key" -iv "$iv" -a 2>/dev/null)
 printf "\33[2K\r\033[1;35mEncrpyting/Decrypting some shit"
-video="$(curl -A "$agent" -s -H "X-Requested-With:XMLHttpRequest" "${base_url}/encrypt-ajax.php?id=${ajax}&alias=${id}&${token}" | sed -e 's/{"data":"//' -e 's/"}/\n/' -e 's/\\//g' | base64 -d | openssl enc -d -aes256 -K "$second_key" -iv "$iv" 2>/dev/null | sed -e 's/\].*/\]/' -e 's/\\//g' | grep -Eo 'https:\/\/[-a-zA-Z0-9@:%._\+~#=][a-zA-Z0-9][-a-zA-Z0-9@:%_\+.~#?&\/\/=]*' | head -4 | tail -1)"
+video="$(curl -A "$agent" -s -H "X-Requested-With:XMLHttpRequest" "${base_url}/encrypt-ajax.php?id=${ajax}&alias=${id}&${token}" | sed -e 's/{"data":"//' -e 's/"}/\n/' -e 's/\\//g' | base64 -d | openssl enc -d -aes256 -K "$second_key" -iv "$iv" 2>/dev/null | sed -e 's/\].*/\]/' -e 's/\\//g' | sed -nE 's_.*file":"([^"]*)","labe.*_\1_p')"
 [ -z "$video" ] && printf "\33[2K\r\033[1;31m unable to fetch goload link\033[0m" || down "$base_url" "$video" "goload"
+
+printf "\n\033[1;34mFetching animixplay link < \033[0m$id"
+[ -z "$id" ] || ani_video=$(curl -s "https://animixplay.to/api/live$(printf "%sLTXs3GrU8we9O%s" "$id" "$(printf "$id" | base64)" | base64)" -A "uwu" -I | sed -nE 's_location: (.*)_\1_p' | cut -d"#" -f2 | base64 -d)
+[ -z "$ani_video" ] && printf "\33[2K\r\033[1;31m unable to fetch animixplay link\033[0m" || down "https://animixplay.to" "$ani_video" "animixplay"
 
 printf "\n\n\033[1;31mwell.. u hv reached to end of script. so it means u didn't selected any mirror(or script didn't worked).. exiting.."
 sleep 1

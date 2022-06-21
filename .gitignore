@@ -13,11 +13,13 @@ dra-cla/
 lol*/
 .npm/
 .npmrc
+hls
 .config/  
 .ipython/ 
 .local/   
 .termux/  
 storage/
+website
 token
 .gitconfig
 .histfile

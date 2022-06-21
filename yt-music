@@ -12,4 +12,4 @@ printf "\33[2K\r\033[1;36mFetching mp3 link"
 [ -z "$token2" ] || url=$(curl -s -X POST -H "X-Requested-With:XMLHttpRequest" "https://ytmp3x.com/ajax" -d "purpose=download&token=$token2&b=320&r=https://ytmp3x.com/$id" | tr -d '\\' | sed -nE 's/.*mp3url":"(.*)"\}/\1/p')
 [ -z "$url" ] && printf "\33[2K\r\033[1;31m unable to fetch mp3 link\033[0m" && exit 0
 printf "\32[2K\r\033[1;32mDownloading\033[0m %s\n" "$url"
-aria2c --summary-interval=0 -x 16 -s 16 "$url" --dir=$MMC/Music --download-result=hide && termux-notification -t "yt-music" -c "Music Downloaded" || (termux-notification -t "yt-music" -c "Downloading failed" && exit 0)
+aria2c --summary-interval=0 -x 16 -s 16 "$url" --dir=/storage/BB90-191C/Music --download-result=hide && termux-notification -t "yt-music" -c "Music Downloaded" || (termux-notification -t "yt-music" -c "Downloading failed" && exit 0)
