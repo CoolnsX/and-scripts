@@ -40,7 +40,6 @@ anime () {
 
 # Lines configured by zsh-newuser-install
 export EDITOR=nvim
-export MMC=/storage/BB90-191C
 alias v="nvim"
 alias neofetch="neofetch --ascii_distro android_small"
 alias notirm="termux-notification-remove"

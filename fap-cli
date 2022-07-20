@@ -49,9 +49,9 @@ input() {
 stream () {
 	case $player_fn in 
 		vlc)
-			setsid -f "$player_fn" --http-referrer="$base_url" "$1" > /dev/null 2>&1;;
+			uname -a | grep -qE "[Aa]ndroid" && am start --user 0 -a android.intent.action.VIEW -d "$1" -n org.videolan.vlc/org.videolan.vlc.gui.video.VideoPlayerActivity -e "title" "$2" > /dev/null 2>&1 || setsid -f "$player_fn" --http-referrer="$base_url" "$1" > /dev/null 2>&1;;
 		mpv)
-			setsid -f "$player_fn" "$1" --referrer="$base_url" --force-media-title="$2" > /dev/null 2>&1;;
+			uname -a | grep -qE "[Aa]ndroid" && am start --user 0 -a android.intent.action.VIEW -d "$1" -n is.xyz.mpv/.MPVActivity > /dev/null 2>&1 || setsid -f "$player_fn" "$1" --referrer="$base_url" --force-media-title="$2" > /dev/null 2>&1;;
 	esac
 }
 
