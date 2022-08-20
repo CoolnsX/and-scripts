@@ -1,0 +1,20 @@
+#!/bin/sh
+
+[ -z "$*" ] && printf "enter(paste) number or link:" && read -r num || num=$*
+num=$(printf "$num" | cut -d'/' -f5)
+dir="$HOME/.cache/$num"
+mkdir -p $dir
+trap "rm -rf $dir;exit 0" INT HUP
+pg=$(curl -s "https://nhentai.to/g/$num/1" | sed -nE 's/.*pages">(.*)<\/span><.*/\1/p;s/.*<img src="([^"]*)" wi.*/\1/p')
+url=$(printf "%s" "$pg" | sed -n 2p)
+pg=$(printf "%s" "$pg" | head -1)
+printf "\033[1;35m pages : $pg\n\033[1;33mDownloading.."
+curl -s "$url" -o "$dir/001" && printf "\33[2K\r\033[1;32m 1 / $pg done" || printf "\033[1;31m 1 ❌\n" &
+for i in $(seq 2 $pg);do
+	url=$(curl -s "https://nhentai.to/g/$num/$i" | sed -nE 's/.*<img src="([^"]*)" wi.*/\1/p')
+	curl -s "$url" -o "$dir/$(printf "%03d" $i)" && printf "\33[2K\r\033[1;32m $i / $pg done" || printf "\033[1;31m $i ❌\n" &
+done
+wait
+printf "\033[2K\r\033[1;34mconcatenating pages to pdf"
+convert "$dir/*" "/storage/BB90-191C/$num.pdf" && printf "\033[2K\r\033[1;36msaved pdf as $num.pdf ...enjoy 😏😏\033[0m\n"
+rm -rf $dir

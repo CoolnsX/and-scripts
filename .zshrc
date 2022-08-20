@@ -3,6 +3,11 @@ aria(){
 	aria2c -s 16 -x 16 --referer="$1" --dir=BB90-191C "$2" --check-certificate=false --download-result=hide --summary-interval=0 
 }
 
+mpv() {
+    [ -z "$*" ] ||
+    am start --user 0 -a android.intent.action.VIEW -d "$*" -n is.xyz.mpv/.MPVActivity
+}
+
 gtp () {
     git add .
     git commit -m "$*"
@@ -27,16 +32,8 @@ url() {
 }
 
 music () {
-    mpv $(curl -s -X POST -H "X-Requested-With:XMLHttpRequest" "https://ytmp3x.com/ajax" -d "purpose=download&token=$(curl -s -X POST -H "X-Requested-With:XMLHttpRequest" 'https://ytmp3x.com/ajax' -d "purpose=audio&token=$(curl -s "https://ytmp3x.com/$(printf "$*" | cut -d"=" -f2 | cut -d"/" -f4)" | sed -nE 's/.*token":"(.*)","adg.*/\1/p')" | sed -nE 's/.*audio":"(.*)"\}/\1/p')&b=320&r=https://ytmp3x.com/$id" | tr -d '\\' | sed -nE 's/.*mp3url":"(.*)"\}/\1/p')
+    am start --user 0 -a android.intent.action.VIEW -d $(curl -s -X POST -H "X-Requested-With:XMLHttpRequest" "https://ytmp3x.com/ajax" -d "purpose=download&token=$(curl -s -X POST -H "X-Requested-With:XMLHttpRequest" 'https://ytmp3x.com/ajax' -d "purpose=audio&token=$(curl -s "https://ytmp3x.com/$(printf "$*" | cut -d"=" -f2 | cut -d"/" -f4)" | sed -nE 's/.*token":"(.*)","adg.*/\1/p')" | sed -nE 's/.*audio":"(.*)"\}/\1/p')&b=320&r=https://ytmp3x.com/$id" | tr -d '\\' | sed -nE 's/.*mp3url":"(.*)"\}/\1/p') -n is.xyz.mpv/.MPVActivity >/dev/null 2>&1
 }
-
-anime () {
-    resp=$(curl -s "https://animixplay.to" -A "uwu" | sed -nE 's_.*href="/v1/(.*)" title.*_\1_p' | fzf)
-    latest_ep=$(printf "%s" "$resp" | sed -nE 's_.*/ep(.*)_\1_p')
-    anime=$(printf "%s" "$resp" | cut -d'/' -f1)
-    $HOME/lol/bin/ani-cli -f6 -a "$latest_ep" "$anime"
-}
-
 
 # Lines configured by zsh-newuser-install
 export EDITOR=nvim
