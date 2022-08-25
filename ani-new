@@ -2,13 +2,14 @@
 
 down () {
 	ch="download"
-	ch=$(printf "%s\ncast\nstream\ndownload\nnext mirror" "$2" | fzf --header-first --header-lines=1 --prompt="Wanna?? (default:download)> ")
+	printf "Link>>\n%s\n" "$2"
+	ch=$(printf "cast\nstream\ndownload\nnext mirror" | fzf --height=5 --border --prompt="Wanna?? (default:download)> ")
 	[ "$ch" = "next mirror" ] && printf "\33[2K\r\033[1;33m Skipped %s video link" "$3" && return 0
 	printf "\033[2K\r\033[1;32m${ch}ing ($3) video link>>\n\033[0m"
-	printf "%s\n" "$2" | grep 'm3u8'
 	[ "$ch" = "stream" ] && am start --user 0 -a android.intent.action.VIEW -d "$2" -n is.xyz.mpv/.MPVActivity >/dev/null 2>&1 && exit 0
 	[ "$ch" = "cast" ] && catt cast "$2" && exit 0
-	aria2c --summary-interval=0 -x 16 -s 16 --referer="$1" "$2" --dir=/storage/BB90-191C -o "$url.mp4" --download-result=hide --check-certificate=false && termux-notification -t "Episode Downloaded" -c "$url" || termux-notification -t "Downloading failed" -c "$url"
+	aria2c -c --summary-interval=0 -x 16 -s 16 --referer="$1" "$2" --dir=/storage/BB90-191C -o "$url.mp4" --download-result=hide --check-certificate=false && termux-notification -t "Episode Downloaded" -c "$url" || termux-notification -t "Downloading failed" -c "$url"
+	exit 0
 }
 
 search() {
@@ -16,7 +17,7 @@ search() {
 	curl -A "$agent" -s "$base_url?page=2" | sed -nE 's_.*<a href="/videos/([^"]*)">_\1_p' &
 }
 
-base_url=https://goload.pro
+base_url="https://goload.pro"
 agent="Mozilla/5.0 (Linux; Android 11; moto g(9) power) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.61 Mobile Safari/537.36"
 trap "exit 0" INT HUP
 [ -z "$*" ] && url=$(search | fzf) || url=$*
@@ -25,8 +26,13 @@ refr=$(curl -A "$agent" -s "$base_url/videos/$url" | sed -nE 's/.*iframe src="(.
 printf "\33[2K\r\033[1;34mFetching Embed links"
 resp="$(curl -A "$agent" -s "https:$refr" | sed -nE 's/.*class="container-(.*)">/\1/p ; s/.*class="wrapper container-(.*)">/\1/p ; s/.*class=".*videocontent-(.*)">/\1/p ; s/.*data-value="(.*)">.*/\1/p ; s/.*data-status="1".*data-video="(.*)">.*/\1/p')"
 
+fb_id=$(printf "$resp" | sed -n "s_.*fembed.*/v/__p")
+printf "\33[2K\r\033[1;34mFetching xstreamcdn links <\033[0m $fb_id"
+[ -z "$fb_id" ] || fb_video=$(curl -A "$agent" -s -X POST "https://fembed-hd.com/api/source/$fb_id" -H "x-requested-with:XMLHttpRequest" | sed -e 's/\\//g' -e 's/.*data"://' | tr "}" "\n" | sed -nE 's/.*file":"(.*)","label.*/\1/p' | tail -1)
+[ -z "$fb_video" ] && printf "\33[2K\r\033[1;31m unable to fetch xstreamcdn link\033[0m" || down "https://fembed-hd.com/v/$fb_id" "$fb_video" "xstreamcdn"
+
 mp4up_link=$(printf "$resp" | grep "mp4upload")
-printf "\33[2K\r\033[1;34mFetching mp4upload links < \033[0m%s" "$(printf "$mp4up_link" | cut -d"-" -f2)"
+printf "\n\033[1;34mFetching mp4upload links < \033[0m%s" "$(printf "$mp4up_link" | cut -d"-" -f2)"
 [ -z "$mp4up_link" ] || mp4up_video=$(curl -A "$agent" -s "$mp4up_link" -H "DNT: 1" | sed -nE 's_.*embed\|(.*)\|.*blank.*\|(.*)\|(.*)\|(.*)\|(.*)\|src.*_https://\1.mp4upload.com:\5/d/\4/\3.\2_p')
 [ -z "$mp4up_video" ] && printf "\33[2K\r\033[1;31m unable to fetch mp4upload link\033[0m" || down "$mp4up_link" "$mp4up_video" "mp4upload"
 
@@ -36,8 +42,3 @@ printf "\n\033[1;34mFetching doodstream links <\033[0m $dood_id"
 [ -z "$dood_id" ] || sleep 0.5
 [ -z "$dood_link" ] || dood_video=$(curl -A "$agent" -s "https://dood.ws${dood_link}" | sed -nE "s_.*window.open\('([^']*)',.*_\1_p")
 [ -z "$dood_video" ] && printf "\33[2K\r\033[1;31m unable to fetch doodstream link\033[0m" || down "https://dood.ws/d/$dood_id" "$dood_video" "doodstream"
-
-fb_id=$(printf "$resp" | sed -n "s_.*fembed.*/v/__p")
-printf "\n\033[1;34mFetching xstreamcdn links <\033[0m $fb_id"
-[ -z "$fb_id" ] || fb_video=$(curl -A "$agent" -s -X POST "https://fembed-hd.com/api/source/$fb_id" -H "x-requested-with:XMLHttpRequest" | sed -e 's/\\//g' -e 's/.*data"://' | tr "}" "\n" | sed -nE 's/.*file":"(.*)","label.*/\1/p' | tail -1)
-[ -z "$fb_video" ] && printf "\33[2K\r\033[1;31m unable to fetch xstreamcdn link\033[0m" || down "https://fembed-hd.com/v/$fb_id" "$fb_video" "xstreamcdn"

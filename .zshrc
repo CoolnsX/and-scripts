@@ -1,6 +1,6 @@
 #user-defined functions
 aria(){
-	aria2c -s 16 -x 16 --referer="$1" --dir=BB90-191C "$2" --check-certificate=false --download-result=hide --summary-interval=0 
+	aria2c -c -s 16 -x 16 --referer="*" --dir=BB90-191C "$1" -o "$2" --check-certificate=false --download-result=hide --summary-interval=0
 }
 
 mpv() {
