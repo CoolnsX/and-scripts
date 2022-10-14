@@ -1,11 +1,10 @@
 #user-defined functions
 aria(){
-	aria2c -c -s 16 -x 16 --referer="*" --dir=BB90-191C "$1" -o "$2" --check-certificate=false --download-result=hide --summary-interval=0
+	aria2c -c -s 16 -x 16 --referer="$1" --dir=BB90-191C "$2" --check-certificate=false --download-result=hide --summary-interval=0
 }
 
 mpv() {
-    [ -z "$*" ] ||
-    am start --user 0 -a android.intent.action.VIEW -d "$*" -n is.xyz.mpv/.MPVActivity
+    [ -z "$*" ] || am start --user 0 -a android.intent.action.VIEW -d "$*" -n is.xyz.mpv/.MPVActivity
 }
 
 gtp () {
@@ -29,6 +28,10 @@ gtd () {
 
 url() {
     curl -F"file=@$*" https://0x0.st
+}
+
+tor () {
+    curl -s "https://thepiratebay0.org/search/$(printf "$*" | sed 's_ _%20_g')" | tr '\n' ' ' | sed -e 's_<div_\n_g;s_</tr>_\n_g;s_&nbsp\;__g' | sed -nE 's_.*title.*">([^<]*).*a href="(magnet[^"]*)".*Size ([^,]*).*">([^<]*)<.*<.*_\[size:\3,se:\4\]\t\1\t\2_p' | fzf -d'\t' --with-nth ..2 --border --layout=reverse --height=20 | cut -f3
 }
 
 music () {

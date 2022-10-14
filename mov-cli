@@ -43,7 +43,7 @@ get_query () {
 
 get_token() {
 	printf "${c_blue}Fetching token.."
-	token=$(curl -X POST -sc - -o /dev/null "$base_url:5679/authorization/session/continue?contentUsageType=Viewing" -A "uwu" -H "Origin: $base_url" -e "$base_url" | sed -n 's/.*ipiid\t//p')
+	curl -X POST -sc - -o /dev/null "$base_url:5679/authorization/session/continue?contentUsageType=Viewing" -A "uwu" -H "Origin: $base_url" -e "$base_url" | sed -n 's/.*ipiid\t//p' > $HOME/.cache/mtoken &
 }
 
 input() {
@@ -83,6 +83,7 @@ get_show() {
 	printf "${c_magenta}selected $result\n${c_blue}Fetching season/episode list"
 	build_id=$(printf "%s" "$data" | sed -nE 's/.*buildId\":"(.*)",.*run.*/\1/p')
 	result_id=$(printf "%s" "$result" | cut -d"-" -f2-)
+	token=$(cat $HOME/.cache/mtoken)
 	show_all=$(curl -s "$base_url:443/_next/data/$build_id/tv-show/$result_id/season-1/episode-1.json" -b "theflix.ipiid=$token" | sed 's/selectedTvSeason.*//' | tr '{|}' '\n')
 	printf "\33[2K\r${c_green}Seasons/Episodes list fetched\n"
 	get_show_se
@@ -115,6 +116,7 @@ get_movie () {
 	printf "${c_blue}Fetching movie"
 	display=$(printf "%s" "$movie_name" | tr -d '[:punct:]')
 	id=$(printf "%s" "$results" | sed -n "s/\t$movie_name$//p")
+	token=$(cat $HOME/.cache/mtoken)
 	play_link "movies"
 }
 

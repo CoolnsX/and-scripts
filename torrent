@@ -11,17 +11,18 @@ c_reset="\033[0m"
 down(){
     tput reset
     termux-notification --ongoing -i 2 -t "Torrent" -c "Downloading"
-    aria2c --summary-interval=0 --select-file=$2 --dir=/storage/BB90-191C --seed-time=0 $1 && termux-notification -i 2 -t "Torrent" -c "Download complete" || termux-notification -i 2 -t "Torrent" -c "Download error!!"
+    aria2c --summary-interval=0 --select-file=$2 --dir=/sdcard --seed-time=0 $1 && termux-notification -i 2 -t "Torrent" -c "Download complete" || termux-notification -i 2 -t "Torrent" -c "Download error!!"
 }
 
 trap "rm -f $HOME/.cache/*.torrent;termux-notification-remove 2;exit 0" INT HUP
 [ -z "$*" ] && magnet=$(termux-clipboard-get) || magnet=$*
 printf "\n${c_blue}Magnet link >>${c_reset}\n%s\n" "$magnet"
-printf "\n${c_yellow}Download >>\n${c_green}(f)ull torrent\n${c_cyan}(s)elective torrent \n${c_red}(q)uit"
+printf "\n${c_yellow}Download >>\n${c_blue}(e)xternal torrent client\n${c_green}(f)ull torrent\n${c_cyan}(s)elective torrent \n${c_red}(q)uit"
 printf "${c_magenta}\n  (input)>>${c_reset} "
 read -r ch
 case $ch in
     f)	down "$magnet";;
+    e)	am broadcast --user 0 -a android.intent.action.VIEW -n com.termux/com.termux.app.TermuxOpenReceiver -d "$magnet";;
     s)	aria2c --dir=$HOME/.cache --bt-metadata-only=true --bt-save-metadata=true "$magnet"
     	tput reset
 	aria2c --show-files=true $HOME/.cache/*.torrent
