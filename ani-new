@@ -8,26 +8,30 @@ down () {
 	printf "\033[2K\r\033[1;32m${ch}ing ($3) video link>>\n\033[0m"
 	[ "$ch" = "stream" ] && am start --user 0 -a android.intent.action.VIEW -d "$2" -n is.xyz.mpv/.MPVActivity >/dev/null 2>&1 && exit 0
 	[ "$ch" = "cast" ] && catt cast "$2" && exit 0
-	aria2c -c --summary-interval=0 -x 16 -s 16 --referer="$1" "$2" --dir=/storage/BB90-191C -o "$url.mp4" --download-result=hide --check-certificate=false && termux-notification -t "Episode Downloaded" -c "$url" || termux-notification -t "Downloading failed" -c "$url"
+	if printf "%s" "$2" | grep -q "m3u8";then
+	    hls -ro "/sdcard/$url" "$2"
+	else
+	    aria2c -c --summary-interval=0 -x 16 -s 16 --referer="$1" "$2" --dir=/sdcard -o "$url.mp4" --download-result=hide --check-certificate=false && termux-notification -t "Episode Downloaded" -c "$url" || termux-notification -t "Downloading failed" -c "$url"
+	fi
 	exit 0
-}
-
-search() {
-	curl -A "$agent" -s "$base_url?page=1" | sed -nE 's_.*<a href="/videos/([^"]*)">_\1_p' &
-	curl -A "$agent" -s "$base_url?page=2" | sed -nE 's_.*<a href="/videos/([^"]*)">_\1_p' &
 }
 
 base_url="https://gogohd.net"
 agent="Mozilla/5.0 (Linux; Android 11; moto g(9) power) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Mobile Safari/537.36"
 trap "exit 0" INT HUP
-[ -z "$*" ] && url=$(search | fzf) || url=$*
+[ -z "$*" ] && url=$(curl -A "$agent" -s "$base_url?page={1,2}" | sed -nE 's_.*<a href="/videos/([^"]*)">_\1_p' | fzf) || url=$*
 [ -z "$url" ] && exit 0 || printf "\033[1;35mSelected $url\n\033[1;36mLoading Episode.."
 refr=$(curl -A "$agent" -s "$base_url/videos/$url" | sed -nE 's/.*iframe src="(.*)" al.*/\1/p')
 printf "\33[2K\r\033[1;34mFetching Embed links"
 resp="$(curl -A "$agent" -s "https:$refr" | sed -nE 's/.*class="container-(.*)">/\1/p ; s/.*class="wrapper container-(.*)">/\1/p ; s/.*class=".*videocontent-(.*)">/\1/p ; s/.*data-value="(.*)">.*/\1/p ; s/.*data-status="1".*data-video="(.*)">.*/\1/p')"
 
+id=$(printf "%s" "$refr" | sed -nE 's/.*id=([^&]*).*/\1/p')
+printf "\33[2K\r\033[1;34mFetching animixplay link < \033[0m$id"
+[ -z "$id" ] || ani_video=$(curl -s "https://animixplay.to/api/cW9$(printf "%sLTXs3GrU8we9O%s" "$id" "$(printf "$id" | base64)" | base64)" -A "uwu" -I | sed -nE 's_location: (.*)_\1_p' | cut -d"#" -f2 | base64 -d)
+[ -z "$ani_video" ] && printf "\33[2K\r\033[1;31m unable to fetch animixplay link\033[0m" || down "https://animixplay.to" "$ani_video" "animixplay"
+
 fb_id=$(printf "$resp" | sed -n "s_.*fembed.*/v/__p")
-printf "\33[2K\r\033[1;34mFetching xstreamcdn links <\033[0m $fb_id"
+printf "\n\033[1;34mFetching xstreamcdn links <\033[0m $fb_id"
 [ -z "$fb_id" ] || fb_video=$(curl -A "$agent" -s -X POST "https://fembed-hd.com/api/source/$fb_id" -H "x-requested-with:XMLHttpRequest" | sed -e 's/\\//g' -e 's/.*data"://' | tr "}" "\n" | sed -nE 's/.*file":"(.*)","label.*/\1/p' | tail -1)
 [ -z "$fb_video" ] && printf "\33[2K\r\033[1;31m unable to fetch xstreamcdn link\033[0m" || down "https://fembed-hd.com/v/$fb_id" "$fb_video" "xstreamcdn"
 
@@ -42,8 +46,3 @@ printf "\n\033[1;34mFetching doodstream links <\033[0m $dood_id"
 [ -z "$dood_id" ] || sleep 0.5
 [ -z "$dood_link" ] || dood_video=$(curl -A "$agent" -s "https://dood.ws${dood_link}" | sed -nE "s_.*window.open\('([^']*)',.*_\1_p")
 [ -z "$dood_video" ] && printf "\33[2K\r\033[1;31m unable to fetch doodstream link\033[0m" || down "https://dood.ws/d/$dood_id" "$dood_video" "doodstream"
-
-id=$(printf "%s" "$refr" | sed -nE 's/.*id=([^&]*).*/\1/p')
-printf "\n\033[1;34mFetching animixplay link < \033[0m$id"
-[ -z "$id" ] || ani_video=$(curl -s "https://animixplay.to/api/live$(printf "%sLTXs3GrU8we9O%s" "$id" "$(printf "$id" | base64)" | base64)" -A "uwu" -I | sed -nE 's_location: (.*)_\1_p' | cut -d"#" -f2 | base64 -d)
-[ -z "$ani_video" ] && printf "\33[2K\r\033[1;31m unable to fetch animixplay link\033[0m" || down "https://animixplay.to" "$ani_video" "animixplay"

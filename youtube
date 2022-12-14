@@ -14,9 +14,7 @@ part(){
 	read start
 	printf "${c_yellow}Enter Upto Seconds:${c_cyan}"
 	read dur
-	[ -z "$2" ] &&
-	ffmpeg -i $(yt-dlp -f b --get-url "$1") -ss $start -t $dur -map 0 /storage/BB90-191C/$(date +%s).mp4 ||
-	ffmpeg -i $(yt-dlp -f 'ba' --get-url "$1") -ss $start -t $dur -map a -q:a 0 /storage/BB90-191C/$(date +%s).mp3
+	ffmpeg -loglevel error -stats -i $(yt-dlp -f "$3" --get-url "$1") -ss $start -t $dur  /storage/BB90-191C/$(date +%s).$2
 }
 
 #program starts from here..
@@ -28,8 +26,8 @@ printf "\n${c_reset}Enter choice:${c_green}"
 read choice
 case $choice in
 	a)	yt-dlp -f 'ba' -x --audio-format mp3 "$x" -o "/storage/BB90-191C/%(title)s.%(ext)s" && termux-notification -c "audio downloaded";;
-	f)	part "$x" "1" && termux-notification -c "audio downloaded";;
+	f)	part "$x" "mp3" "ba" && termux-notification -c "audio downloaded";;
 	v)	yt-dlp "$x" -o "/storage/BB90-191C/%(title)s.%(ext)s" && termux-notification -c "video downloaded";;
-	p)	part "$x" && termux-notification -c "video downloaded";;
+	p)	part "$x" "mp4" "b" && termux-notification -c "video downloaded";;
 	q)	break;;
 esac
